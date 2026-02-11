@@ -1,0 +1,389 @@
+'use client';
+
+import { useReducer, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { DEFAULT_RSVP_FIELDS } from '@/lib/constants';
+import StepDesignUpload from './StepDesignUpload';
+import StepEventDetails from './StepEventDetails';
+import StepCustomize from './StepCustomize';
+import StepRSVPFields from './StepRSVPFields';
+import StepPreview from './StepPreview';
+
+// ── Types ──────────────────────────────────────────────────────────────
+
+export interface RSVPField {
+  field_name: string;
+  field_type: string;
+  field_label: string;
+  is_required: boolean;
+  is_enabled: boolean;
+  options?: string[] | null;
+  placeholder?: string | null;
+}
+
+export interface EventCustomization {
+  primaryColor: string;
+  backgroundColor: string;
+  backgroundImage: string;
+  fontFamily: string;
+  buttonStyle: string;
+  showCountdown: boolean;
+}
+
+export interface WizardFormData {
+  title: string;
+  description: string;
+  event_date: string;
+  event_end_date: string;
+  location_name: string;
+  location_address: string;
+  design_url: string;
+  design_type: string;
+  customization: EventCustomization;
+  rsvp_fields: RSVPField[];
+}
+
+type WizardAction =
+  | { type: 'UPDATE_FIELD'; field: keyof WizardFormData; value: unknown }
+  | { type: 'UPDATE_CUSTOMIZATION'; field: keyof EventCustomization; value: unknown }
+  | { type: 'SET_RSVP_FIELDS'; fields: RSVPField[] }
+  | { type: 'LOAD_DATA'; data: Partial<WizardFormData> };
+
+interface WizardContainerProps {
+  mode?: 'create' | 'edit';
+  eventId?: string;
+  initialData?: Partial<WizardFormData>;
+}
+
+// ── Steps config ───────────────────────────────────────────────────────
+
+const STEPS = [
+  { number: 1, label: 'Design' },
+  { number: 2, label: 'Details' },
+  { number: 3, label: 'Customize' },
+  { number: 4, label: 'RSVP Fields' },
+  { number: 5, label: 'Preview' },
+] as const;
+
+// ── Default form state ─────────────────────────────────────────────────
+
+function getInitialState(initialData?: Partial<WizardFormData>): WizardFormData {
+  const defaultRsvpFields: RSVPField[] = DEFAULT_RSVP_FIELDS.map((f) => ({
+    field_name: f.field_name,
+    field_type: f.field_type,
+    field_label: f.field_label,
+    is_required: f.is_required,
+    is_enabled: f.is_enabled,
+    options: f.options ?? null,
+    placeholder: f.placeholder ?? null,
+  }));
+
+  return {
+    title: '',
+    description: '',
+    event_date: '',
+    event_end_date: '',
+    location_name: '',
+    location_address: '',
+    design_url: '',
+    design_type: 'upload',
+    customization: {
+      primaryColor: '#6366f1',
+      backgroundColor: '#ffffff',
+      backgroundImage: '',
+      fontFamily: 'Inter',
+      buttonStyle: 'rounded',
+      showCountdown: true,
+    },
+    rsvp_fields: defaultRsvpFields,
+    ...initialData,
+  };
+}
+
+// ── Reducer ────────────────────────────────────────────────────────────
+
+function wizardReducer(state: WizardFormData, action: WizardAction): WizardFormData {
+  switch (action.type) {
+    case 'UPDATE_FIELD':
+      return { ...state, [action.field]: action.value };
+
+    case 'UPDATE_CUSTOMIZATION':
+      return {
+        ...state,
+        customization: {
+          ...state.customization,
+          [action.field]: action.value,
+        },
+      };
+
+    case 'SET_RSVP_FIELDS':
+      return { ...state, rsvp_fields: action.fields };
+
+    case 'LOAD_DATA':
+      return { ...state, ...action.data };
+
+    default:
+      return state;
+  }
+}
+
+// ── Component ──────────────────────────────────────────────────────────
+
+export default function WizardContainer({
+  mode = 'create',
+  eventId,
+  initialData,
+}: WizardContainerProps) {
+  const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, dispatch] = useReducer(wizardReducer, getInitialState(initialData));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const updateField = useCallback(
+    (field: keyof WizardFormData, value: unknown) => {
+      dispatch({ type: 'UPDATE_FIELD', field, value });
+    },
+    []
+  );
+
+  const updateCustomization = useCallback(
+    (field: keyof EventCustomization, value: unknown) => {
+      dispatch({ type: 'UPDATE_CUSTOMIZATION', field, value });
+    },
+    []
+  );
+
+  const setRsvpFields = useCallback((fields: RSVPField[]) => {
+    dispatch({ type: 'SET_RSVP_FIELDS', fields });
+  }, []);
+
+  const goNext = useCallback(() => {
+    setCurrentStep((prev) => Math.min(prev + 1, 5));
+  }, []);
+
+  const goBack = useCallback(() => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  }, []);
+
+  const handleSubmit = async (publishOnCreate: boolean = false) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const payload = {
+        title: formData.title,
+        description: formData.description || undefined,
+        event_date: formData.event_date || undefined,
+        event_end_date: formData.event_end_date || undefined,
+        location_name: formData.location_name || undefined,
+        location_address: formData.location_address || undefined,
+        design_url: formData.design_url || undefined,
+        design_type: formData.design_type || 'upload',
+        customization: formData.customization,
+        status: publishOnCreate ? 'published' : 'draft',
+      };
+
+      let eventResponse;
+
+      if (mode === 'edit' && eventId) {
+        const res = await fetch(`/api/events/${eventId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to update event');
+        }
+
+        eventResponse = await res.json();
+
+        // Update RSVP fields
+        await fetch(`/api/events/${eventId}/rsvp-fields`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData.rsvp_fields),
+        });
+      } else {
+        const res = await fetch('/api/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to create event');
+        }
+
+        eventResponse = await res.json();
+
+        // Update RSVP fields if different from defaults
+        await fetch(`/api/events/${eventResponse.id}/rsvp-fields`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData.rsvp_fields),
+        });
+      }
+
+      router.push(`/events/${eventResponse.id}`);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ── Render step content ──────────────────────────────────────────────
+
+  function renderStep() {
+    switch (currentStep) {
+      case 1:
+        return (
+          <StepDesignUpload
+            designUrl={formData.design_url}
+            designType={formData.design_type}
+            onUpdate={updateField}
+          />
+        );
+      case 2:
+        return (
+          <StepEventDetails
+            data={{
+              title: formData.title,
+              description: formData.description,
+              event_date: formData.event_date,
+              event_end_date: formData.event_end_date,
+              location_name: formData.location_name,
+              location_address: formData.location_address,
+            }}
+            onUpdate={updateField}
+          />
+        );
+      case 3:
+        return (
+          <StepCustomize
+            customization={formData.customization}
+            onUpdate={updateCustomization}
+          />
+        );
+      case 4:
+        return (
+          <StepRSVPFields
+            fields={formData.rsvp_fields}
+            onUpdate={setRsvpFields}
+          />
+        );
+      case 5:
+        return (
+          <StepPreview
+            formData={formData}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
+        );
+      default:
+        return null;
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      {/* ── Stepper ─────────────────────────────────────────────────── */}
+      <nav aria-label="Wizard steps" className="mb-8">
+        <ol className="flex items-center justify-between">
+          {STEPS.map((step) => {
+            const isActive = currentStep === step.number;
+            const isCompleted = currentStep > step.number;
+            return (
+              <li key={step.number} className="flex flex-1 items-center">
+                <div className="flex flex-col items-center gap-1.5 w-full">
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors',
+                      isActive && 'border-indigo-600 bg-indigo-600 text-white',
+                      isCompleted && 'border-indigo-600 bg-indigo-100 text-indigo-700',
+                      !isActive && !isCompleted && 'border-gray-300 bg-white text-gray-400'
+                    )}
+                  >
+                    {isCompleted ? (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      step.number
+                    )}
+                  </div>
+                  <span
+                    className={cn(
+                      'text-xs font-medium',
+                      isActive && 'text-indigo-600',
+                      isCompleted && 'text-indigo-600',
+                      !isActive && !isCompleted && 'text-gray-400'
+                    )}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+                {step.number < 5 && (
+                  <div
+                    className={cn(
+                      'h-0.5 w-full -mt-4',
+                      currentStep > step.number ? 'bg-indigo-600' : 'bg-gray-200'
+                    )}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      {/* ── Error message ───────────────────────────────────────────── */}
+      {submitError && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {submitError}
+        </div>
+      )}
+
+      {/* ── Step content ────────────────────────────────────────────── */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        {renderStep()}
+      </div>
+
+      {/* ── Navigation buttons ──────────────────────────────────────── */}
+      {currentStep < 5 && (
+        <div className="mt-6 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={goBack}
+            disabled={currentStep === 1}
+            className={cn(
+              'rounded-lg px-5 py-2.5 text-sm font-medium transition-colors',
+              currentStep === 1
+                ? 'cursor-not-allowed text-gray-300'
+                : 'text-gray-600 hover:bg-gray-100'
+            )}
+          >
+            Back
+          </button>
+
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={currentStep === 2 && !formData.title.trim()}
+            className={cn(
+              'rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700',
+              currentStep === 2 && !formData.title.trim() && 'cursor-not-allowed opacity-50'
+            )}
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
