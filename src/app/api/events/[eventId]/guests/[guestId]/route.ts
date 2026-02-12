@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getMockUser } from "@/lib/mock-auth";
+import { getEventById, updateGuest, deleteGuest } from "@/lib/mock-data";
 import { guestSchema } from "@/lib/validations";
 
 export async function PATCH(
@@ -9,17 +10,10 @@ export async function PATCH(
   try {
     const { eventId, guestId } = await params;
     const body = await request.json();
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getMockUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: event } = await supabase
-      .from("events")
-      .select("id")
-      .eq("id", eventId)
-      .eq("user_id", user.id)
-      .single();
-
+    const event = getEventById(eventId, user.id);
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const parsed = guestSchema.partial().safeParse(body);
@@ -27,15 +21,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
-    const { data: guest, error } = await supabase
-      .from("guests")
-      .update(parsed.data)
-      .eq("id", guestId)
-      .eq("event_id", eventId)
-      .select()
-      .single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const guest = updateGuest(eventId, guestId, parsed.data);
+    if (!guest) return NextResponse.json({ error: "Guest not found" }, { status: 404 });
 
     return NextResponse.json(guest);
   } catch {
@@ -49,27 +36,13 @@ export async function DELETE(
 ) {
   try {
     const { eventId, guestId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getMockUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: event } = await supabase
-      .from("events")
-      .select("id")
-      .eq("id", eventId)
-      .eq("user_id", user.id)
-      .single();
-
+    const event = getEventById(eventId, user.id);
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const { error } = await supabase
-      .from("guests")
-      .delete()
-      .eq("id", guestId)
-      .eq("event_id", eventId);
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
+    deleteGuest(eventId, guestId);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

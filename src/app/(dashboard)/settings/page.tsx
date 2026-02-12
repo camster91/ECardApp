@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+
+function getMockEmail(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(/(?:^|; )mock-user-email=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : "";
+}
 
 export default function SettingsPage() {
   const [email, setEmail] = useState("");
@@ -13,10 +18,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? "");
-    });
+    setEmail(getMockEmail());
   }, []);
 
   async function handlePasswordUpdate() {
@@ -25,15 +27,8 @@ export default function SettingsPage() {
       return;
     }
     setLoading(true);
-    setMessage(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage("Password updated successfully");
-      setNewPassword("");
-    }
+    setMessage("Password updated successfully (demo mode)");
+    setNewPassword("");
     setLoading(false);
   }
 

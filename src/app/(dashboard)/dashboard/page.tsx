@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { getMockUser } from "@/lib/mock-auth";
+import { getEvents, getResponseCount } from "@/lib/mock-data";
 import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { EventCard } from "@/components/dashboard/EventCard";
@@ -13,43 +14,18 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getMockUser();
   if (!user) redirect("/login");
 
-  const { data: events } = await supabase
-    .from("events")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const events = getEvents(user.id);
 
-  // Get response counts for all events
-  const eventIds = (events ?? []).map((e) => e.id);
-  let responseCounts: Record<string, number> = {};
-
-  if (eventIds.length > 0) {
-    const { data: responses } = await supabase
-      .from("rsvp_responses")
-      .select("event_id")
-      .in("event_id", eventIds);
-
-    if (responses) {
-      responseCounts = responses.reduce(
-        (acc, r) => {
-          acc[r.event_id] = (acc[r.event_id] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>
-      );
-    }
+  const responseCounts: Record<string, number> = {};
+  for (const e of events) {
+    responseCounts[e.id] = getResponseCount(e.id);
   }
 
-  const totalEvents = events?.length ?? 0;
-  const publishedEvents =
-    events?.filter((e) => e.status === "published").length ?? 0;
+  const totalEvents = events.length;
+  const publishedEvents = events.filter((e) => e.status === "published").length;
   const totalResponses = Object.values(responseCounts).reduce(
     (sum, c) => sum + c,
     0
@@ -96,7 +72,7 @@ export default async function DashboardPage() {
         <EmptyState />
       ) : (
         <div className="space-y-3">
-          {events?.map((event) => (
+          {events.map((event) => (
             <EventCard
               key={event.id}
               event={event}

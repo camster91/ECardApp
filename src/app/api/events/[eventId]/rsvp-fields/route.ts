@@ -1,166 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from "next/server";
+import { getMockUser } from "@/lib/mock-auth";
+import { getEventById, getRsvpFields, setRsvpFields } from "@/lib/mock-data";
+import { nanoid } from "nanoid";
+import type { RSVPField } from "@/types/database";
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
-export async function GET(
-  _request: NextRequest,
-  { params }: RouteParams
-) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { eventId } = await params;
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const user = await getMockUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify ownership
-    const { data: event, error: eventError } = await supabase
-      .from('events')
-      .select('id')
-      .eq('id', eventId)
-      .eq('user_id', user.id)
-      .single();
-
-    if (eventError || !event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
+    const event = getEventById(eventId, user.id);
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    const { data: fields, error } = await supabase
-      .from('rsvp_fields')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('sort_order', { ascending: true });
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    }
-
+    const fields = getRsvpFields(eventId);
     return NextResponse.json(fields);
   } catch {
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { eventId } = await params;
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const user = await getMockUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify ownership
-    const { data: event, error: eventError } = await supabase
-      .from('events')
-      .select('id')
-      .eq('id', eventId)
-      .eq('user_id', user.id)
-      .single();
-
-    if (eventError || !event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
+    const event = getEventById(eventId, user.id);
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
     const body = await request.json();
-
     if (!Array.isArray(body)) {
       return NextResponse.json(
-        { error: 'Request body must be an array of RSVP field objects' },
+        { error: "Request body must be an array of RSVP field objects" },
         { status: 400 }
       );
     }
 
-    // Delete existing RSVP fields for this event
-    const { error: deleteError } = await supabase
-      .from('rsvp_fields')
-      .delete()
-      .eq('event_id', eventId);
-
-    if (deleteError) {
-      return NextResponse.json(
-        { error: deleteError.message },
-        { status: 500 }
-      );
-    }
-
-    // Insert new RSVP fields
-    if (body.length > 0) {
-      const fields = body.map((field: Record<string, unknown>, index: number) => ({
+    const fields: RSVPField[] = body.map(
+      (field: Record<string, unknown>, index: number) => ({
+        id: `field-${nanoid(8)}`,
         event_id: eventId,
-        field_name: field.field_name,
-        field_type: field.field_type,
-        field_label: field.field_label,
-        is_required: field.is_required ?? false,
-        is_enabled: field.is_enabled ?? true,
+        field_name: field.field_name as string,
+        field_type: field.field_type as RSVPField["field_type"],
+        field_label: field.field_label as string,
+        is_required: (field.is_required as boolean) ?? false,
+        is_enabled: (field.is_enabled as boolean) ?? true,
         sort_order: index,
-        options: field.options ?? null,
-        placeholder: field.placeholder ?? null,
-      }));
+        options: (field.options as string[] | null) ?? null,
+        placeholder: (field.placeholder as string | null) ?? null,
+        created_at: new Date().toISOString(),
+      })
+    );
 
-      const { error: insertError } = await supabase
-        .from('rsvp_fields')
-        .insert(fields);
-
-      if (insertError) {
-        return NextResponse.json(
-          { error: insertError.message },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Return the newly inserted fields
-    const { data: updatedFields, error: fetchError } = await supabase
-      .from('rsvp_fields')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('sort_order', { ascending: true });
-
-    if (fetchError) {
-      return NextResponse.json(
-        { error: fetchError.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(updatedFields);
+    const updated = setRsvpFields(eventId, fields);
+    return NextResponse.json(updated);
   } catch {
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { GuestTable } from "@/components/guests/GuestTable";
 import { AddGuestModal } from "@/components/guests/AddGuestModal";
 import { Button } from "@/components/ui/Button";

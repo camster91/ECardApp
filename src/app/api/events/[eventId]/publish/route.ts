@@ -1,65 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from "next/server";
+import { getMockUser } from "@/lib/mock-auth";
+import { getEventById, updateEvent } from "@/lib/mock-data";
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
-export async function POST(
-  _request: NextRequest,
-  { params }: RouteParams
-) {
+export async function POST(_request: NextRequest, { params }: RouteParams) {
   try {
     const { eventId } = await params;
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const user = await getMockUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch the current event to get its status
-    const { data: event, error: fetchError } = await supabase
-      .from('events')
-      .select('id, status')
-      .eq('id', eventId)
-      .eq('user_id', user.id)
-      .single();
-
-    if (fetchError || !event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
+    const event = getEventById(eventId, user.id);
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Toggle status between draft and published
-    const newStatus = event.status === 'published' ? 'draft' : 'published';
-
-    const { data: updatedEvent, error: updateError } = await supabase
-      .from('events')
-      .update({ status: newStatus })
-      .eq('id', eventId)
-      .eq('user_id', user.id)
-      .select()
-      .single();
-
-    if (updateError) {
-      return NextResponse.json(
-        { error: updateError.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(updatedEvent);
+    const newStatus = event.status === "published" ? "draft" : "published";
+    const updated = updateEvent(eventId, { status: newStatus });
+    return NextResponse.json(updated);
   } catch {
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

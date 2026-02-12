@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getMockUser } from "@/lib/mock-auth";
+import { getEventById, getGuests, createGuest } from "@/lib/mock-data";
 import { guestSchema } from "@/lib/validations";
 
 export async function GET(
@@ -8,28 +9,13 @@ export async function GET(
 ) {
   try {
     const { eventId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getMockUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Verify ownership
-    const { data: event } = await supabase
-      .from("events")
-      .select("id")
-      .eq("id", eventId)
-      .eq("user_id", user.id)
-      .single();
-
+    const event = getEventById(eventId, user.id);
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const { data: guests, error } = await supabase
-      .from("guests")
-      .select("*")
-      .eq("event_id", eventId)
-      .order("created_at", { ascending: false });
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
+    const guests = getGuests(eventId);
     return NextResponse.json(guests);
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -43,38 +29,26 @@ export async function POST(
   try {
     const { eventId } = await params;
     const body = await request.json();
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getMockUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Verify ownership
-    const { data: event } = await supabase
-      .from("events")
-      .select("id")
-      .eq("id", eventId)
-      .eq("user_id", user.id)
-      .single();
-
+    const event = getEventById(eventId, user.id);
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const parsed = guestSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid data", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid data", details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
 
-    const { data: guest, error } = await supabase
-      .from("guests")
-      .insert({
-        event_id: eventId,
-        name: parsed.data.name,
-        email: parsed.data.email || null,
-        phone: parsed.data.phone || null,
-        notes: parsed.data.notes || null,
-      })
-      .select()
-      .single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const guest = createGuest(eventId, {
+      name: parsed.data.name,
+      email: parsed.data.email || null,
+      phone: parsed.data.phone || null,
+      notes: parsed.data.notes || null,
+    });
 
     return NextResponse.json(guest, { status: 201 });
   } catch {

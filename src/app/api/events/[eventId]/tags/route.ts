@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getMockUser } from "@/lib/mock-auth";
+import { getGuestTags, createGuestTag, deleteGuestTag } from "@/lib/mock-data";
 
 export async function GET(
   _request: Request,
@@ -7,18 +8,10 @@ export async function GET(
 ) {
   try {
     const { eventId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getMockUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: tags, error } = await supabase
-      .from("guest_tags")
-      .select("*")
-      .eq("event_id", eventId)
-      .order("created_at", { ascending: true });
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
+    const tags = getGuestTags(eventId);
     return NextResponse.json(tags);
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -32,22 +25,10 @@ export async function POST(
   try {
     const { eventId } = await params;
     const body = await request.json();
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getMockUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: tag, error } = await supabase
-      .from("guest_tags")
-      .insert({
-        event_id: eventId,
-        tag_name: body.tag_name,
-        color: body.color || "#7c3aed",
-      })
-      .select()
-      .single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
+    const tag = createGuestTag(eventId, body.tag_name, body.color || "#7c3aed");
     return NextResponse.json(tag, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -61,18 +42,10 @@ export async function DELETE(
   try {
     const { eventId } = await params;
     const body = await request.json();
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getMockUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { error } = await supabase
-      .from("guest_tags")
-      .delete()
-      .eq("id", body.tagId)
-      .eq("event_id", eventId);
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
+    deleteGuestTag(eventId, body.tagId);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

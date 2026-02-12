@@ -4,13 +4,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, type ForgotPasswordInput } from "@/lib/validations";
-import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 
 export function ForgotPasswordForm() {
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const {
@@ -21,21 +19,7 @@ export function ForgotPasswordForm() {
     resolver: zodResolver(forgotPasswordSchema),
   });
 
-  async function onSubmit(data: ForgotPasswordInput) {
-    setError(null);
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.resetPasswordForEmail(
-      data.email,
-      {
-        redirectTo: `${window.location.origin}/callback?next=/settings`,
-      }
-    );
-
-    if (authError) {
-      setError(authError.message);
-      return;
-    }
-
+  async function onSubmit() {
     setSuccess(true);
   }
 
@@ -64,12 +48,6 @@ export function ForgotPasswordForm() {
         error={errors.email?.message}
         {...register("email")}
       />
-
-      {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-accent-red">
-          {error}
-        </div>
-      )}
 
       <Button type="submit" loading={isSubmitting} className="w-full">
         Send reset link

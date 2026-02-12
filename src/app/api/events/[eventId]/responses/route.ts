@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getMockUser } from "@/lib/mock-auth";
+import { getEventById, getResponses } from "@/lib/mock-data";
 
 export async function GET(
   request: Request,
@@ -7,51 +8,31 @@ export async function GET(
 ) {
   try {
     const { eventId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getMockUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: event } = await supabase
-      .from("events")
-      .select("id")
-      .eq("id", eventId)
-      .eq("user_id", user.id)
-      .single();
-
+    const event = getEventById(eventId, user.id);
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const url = new URL(request.url);
     const format = url.searchParams.get("format");
+    const responses = getResponses(eventId);
 
-    const { data: responses, error } = await supabase
-      .from("rsvp_responses")
-      .select("*")
-      .eq("event_id", eventId)
-      .order("submitted_at", { ascending: false });
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-    // CSV export
     if (format === "csv") {
-      const headers = [
-        "Name",
-        "Email",
-        "Status",
-        "Headcount",
-        "Submitted At",
-      ];
+      const headers = ["Name", "Email", "Status", "Headcount", "Submitted At"];
 
-      // Get all unique response_data keys
       const dataKeys = new Set<string>();
-      responses?.forEach((r) => {
+      responses.forEach((r) => {
         if (r.response_data && typeof r.response_data === "object") {
-          Object.keys(r.response_data as Record<string, unknown>).forEach((k) => dataKeys.add(k));
+          Object.keys(r.response_data as Record<string, unknown>).forEach((k) =>
+            dataKeys.add(k)
+          );
         }
       });
       const dataKeysList = Array.from(dataKeys);
       headers.push(...dataKeysList);
 
-      const rows = (responses ?? []).map((r) => {
+      const rows = responses.map((r) => {
         const rd = (r.response_data || {}) as Record<string, unknown>;
         return [
           r.respondent_name,

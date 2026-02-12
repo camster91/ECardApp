@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { getInitials } from "@/lib/utils";
+
+function getMockEmail(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|; )mock-user-email=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export function DashboardHeader() {
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
-    });
+    setEmail(getMockEmail());
   }, []);
 
   return (

@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getEventBySlug, getRsvpFields } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import { EventHero } from "@/components/public-event/EventHero";
 import { EventDetails } from "@/components/public-event/EventDetails";
@@ -12,13 +12,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = createAdminClient();
-  const { data: event } = await supabase
-    .from("events")
-    .select("title, description, design_url")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .single();
+  const event = getEventBySlug(slug);
 
   if (!event) return { title: "Event Not Found" };
 
@@ -35,22 +29,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PublicEventPage({ params }: Props) {
   const { slug } = await params;
-  const supabase = createAdminClient();
-
-  const { data: event } = await supabase
-    .from("events")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .single();
+  const event = getEventBySlug(slug);
 
   if (!event) notFound();
 
-  const { data: rsvpFields } = await supabase
-    .from("rsvp_fields")
-    .select("*")
-    .eq("event_id", event.id)
-    .order("sort_order", { ascending: true });
+  const rsvpFields = getRsvpFields(event.id);
 
   return (
     <div
@@ -58,15 +41,12 @@ export default async function PublicEventPage({ params }: Props) {
       style={{ backgroundColor: event.customization?.backgroundColor || "#ffffff" }}
     >
       <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* Event Design */}
         <EventHero event={event} />
 
-        {/* Event Details */}
         <div className="mt-8">
           <EventDetails event={event} />
         </div>
 
-        {/* Location Map */}
         {event.location_address && (
           <div className="mt-8">
             <LocationMap
@@ -76,7 +56,6 @@ export default async function PublicEventPage({ params }: Props) {
           </div>
         )}
 
-        {/* RSVP Form */}
         <div className="mt-8 rounded-xl border border-border bg-white p-6">
           <RSVPForm
             eventSlug={slug}
@@ -85,7 +64,6 @@ export default async function PublicEventPage({ params }: Props) {
           />
         </div>
 
-        {/* Footer branding (free tier) */}
         {event.tier === "free" && (
           <div className="mt-8 text-center">
             <p className="text-xs text-muted-foreground">
