@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { nanoid } from 'nanoid';
 
 export async function POST(request: NextRequest) {
@@ -56,7 +57,10 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const { error: uploadError } = await supabase.storage
+    // Use admin client for storage (bypasses RLS; auth is checked above)
+    const adminSupabase = createAdminClient();
+
+    const { error: uploadError } = await adminSupabase.storage
       .from('event-designs')
       .upload(filePath, buffer, {
         contentType: file.type,
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get public URL
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = adminSupabase.storage
       .from('event-designs')
       .getPublicUrl(filePath);
 
