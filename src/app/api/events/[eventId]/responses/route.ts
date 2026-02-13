@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(
   request: Request,
@@ -11,7 +12,9 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: event } = await supabase
+    const adminSupabase = createAdminClient();
+
+    const { data: event } = await adminSupabase
       .from("events")
       .select("id")
       .eq("id", eventId)
@@ -23,7 +26,7 @@ export async function GET(
     const url = new URL(request.url);
     const format = url.searchParams.get("format");
 
-    const { data: responses, error } = await supabase
+    const { data: responses, error } = await adminSupabase
       .from("rsvp_responses")
       .select("*")
       .eq("event_id", eventId)

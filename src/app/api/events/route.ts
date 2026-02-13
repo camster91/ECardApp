@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { eventCreateSchema } from '@/lib/validations';
 import { generateSlug } from '@/lib/utils';
 import { DEFAULT_RSVP_FIELDS } from '@/lib/constants';
@@ -20,7 +21,10 @@ export async function GET() {
       );
     }
 
-    const { data: events, error } = await supabase
+    // Use admin client with manual user_id filter (bypasses RLS)
+    const adminSupabase = createAdminClient();
+
+    const { data: events, error } = await adminSupabase
       .from('events')
       .select('*')
       .eq('user_id', user.id)
@@ -70,12 +74,15 @@ export async function POST(request: NextRequest) {
 
     const { title, description, event_date, event_end_date, location_name, location_address, design_url, design_type, customization, status } = parsed.data;
 
+    // Use admin client for DB writes (auth verified above via getUser)
+    const adminSupabase = createAdminClient();
+
     // Retry slug generation on collision (unique constraint)
     let event = null;
     let insertError = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       const slug = generateSlug(title);
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from('events')
         .insert({
           user_id: user.id,
@@ -128,12 +135,11 @@ export async function POST(request: NextRequest) {
       placeholder: field.placeholder ?? null,
     }));
 
-    const { error: rsvpError } = await supabase
+    const { error: rsvpError } = await adminSupabase
       .from('rsvp_fields')
       .insert(rsvpFields);
 
     if (rsvpError) {
-      // Event created but RSVP fields failed - log but don't fail the request
       console.error('Failed to insert default RSVP fields:', rsvpError.message);
     }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
@@ -23,8 +24,10 @@ export async function POST(
       );
     }
 
+    const adminSupabase = createAdminClient();
+
     // Fetch the current event to get its status
-    const { data: event, error: fetchError } = await supabase
+    const { data: event, error: fetchError } = await adminSupabase
       .from('events')
       .select('id, status')
       .eq('id', eventId)
@@ -41,7 +44,7 @@ export async function POST(
     // Toggle status between draft and published
     const newStatus = event.status === 'published' ? 'draft' : 'published';
 
-    const { data: updatedEvent, error: updateError } = await supabase
+    const { data: updatedEvent, error: updateError } = await adminSupabase
       .from('events')
       .update({ status: newStatus })
       .eq('id', eventId)

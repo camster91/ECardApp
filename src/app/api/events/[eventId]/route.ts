@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { eventUpdateSchema } from '@/lib/validations';
 
 type RouteParams = { params: Promise<{ eventId: string }> };
@@ -24,7 +25,9 @@ export async function GET(
       );
     }
 
-    const { data: event, error } = await supabase
+    const adminSupabase = createAdminClient();
+
+    const { data: event, error } = await adminSupabase
       .from('events')
       .select('*')
       .eq('id', eventId)
@@ -67,8 +70,10 @@ export async function PATCH(
       );
     }
 
+    const adminSupabase = createAdminClient();
+
     // Verify ownership
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existing, error: fetchError } = await adminSupabase
       .from('events')
       .select('id')
       .eq('id', eventId)
@@ -92,7 +97,7 @@ export async function PATCH(
       );
     }
 
-    const { data: event, error: updateError } = await supabase
+    const { data: event, error: updateError } = await adminSupabase
       .from('events')
       .update(parsed.data)
       .eq('id', eventId)
@@ -136,8 +141,10 @@ export async function DELETE(
       );
     }
 
+    const adminSupabase = createAdminClient();
+
     // Verify ownership
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existing, error: fetchError } = await adminSupabase
       .from('events')
       .select('id')
       .eq('id', eventId)
@@ -151,7 +158,7 @@ export async function DELETE(
       );
     }
 
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminSupabase
       .from('events')
       .delete()
       .eq('id', eventId)

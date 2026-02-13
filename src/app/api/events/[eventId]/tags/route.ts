@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(
   _request: Request,
@@ -11,8 +12,10 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const adminSupabase = createAdminClient();
+
     // Verify ownership
-    const { data: event } = await supabase
+    const { data: event } = await adminSupabase
       .from("events")
       .select("id")
       .eq("id", eventId)
@@ -21,7 +24,7 @@ export async function GET(
 
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const { data: tags, error } = await supabase
+    const { data: tags, error } = await adminSupabase
       .from("guest_tags")
       .select("*")
       .eq("event_id", eventId)
@@ -46,7 +49,19 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: tag, error } = await supabase
+    const adminSupabase = createAdminClient();
+
+    // Verify ownership
+    const { data: event } = await adminSupabase
+      .from("events")
+      .select("id")
+      .eq("id", eventId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const { data: tag, error } = await adminSupabase
       .from("guest_tags")
       .insert({
         event_id: eventId,
@@ -75,7 +90,19 @@ export async function DELETE(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { error } = await supabase
+    const adminSupabase = createAdminClient();
+
+    // Verify ownership
+    const { data: event } = await adminSupabase
+      .from("events")
+      .select("id")
+      .eq("id", eventId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const { error } = await adminSupabase
       .from("guest_tags")
       .delete()
       .eq("id", body.tagId)

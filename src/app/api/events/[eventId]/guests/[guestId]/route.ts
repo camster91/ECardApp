@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { guestSchema } from "@/lib/validations";
 
 export async function PATCH(
@@ -13,7 +14,9 @@ export async function PATCH(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: event } = await supabase
+    const adminSupabase = createAdminClient();
+
+    const { data: event } = await adminSupabase
       .from("events")
       .select("id")
       .eq("id", eventId)
@@ -27,7 +30,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
-    const { data: guest, error } = await supabase
+    const { data: guest, error } = await adminSupabase
       .from("guests")
       .update(parsed.data)
       .eq("id", guestId)
@@ -53,7 +56,9 @@ export async function DELETE(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: event } = await supabase
+    const adminSupabase = createAdminClient();
+
+    const { data: event } = await adminSupabase
       .from("events")
       .select("id")
       .eq("id", eventId)
@@ -62,7 +67,7 @@ export async function DELETE(
 
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from("guests")
       .delete()
       .eq("id", guestId)

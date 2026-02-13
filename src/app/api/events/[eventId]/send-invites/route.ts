@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient } from "@/lib/resend";
 import { buildInvitationEmail } from "@/lib/email-templates";
 
@@ -20,8 +21,10 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const adminSupabase = createAdminClient();
+
     // Ownership + status check
-    const { data: event, error: eventError } = await supabase
+    const { data: event, error: eventError } = await adminSupabase
       .from("events")
       .select("id, title, event_date, location_name, slug, status")
       .eq("id", eventId)
@@ -40,7 +43,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     }
 
     // Fetch guests that need invitations
-    const { data: guests, error: guestsError } = await supabase
+    const { data: guests, error: guestsError } = await adminSupabase
       .from("guests")
       .select("id, name, email, invite_status")
       .eq("event_id", eventId)
@@ -84,7 +87,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
           html,
         });
 
-        await supabase
+        await adminSupabase
           .from("guests")
           .update({
             invite_status: "sent",
@@ -94,7 +97,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
         sent++;
       } catch {
-        await supabase
+        await adminSupabase
           .from("guests")
           .update({ invite_status: "failed" })
           .eq("id", guest.id);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { rsvpFieldSchema } from '@/lib/validations';
 
 type RouteParams = { params: Promise<{ eventId: string }> };
@@ -24,8 +25,10 @@ export async function GET(
       );
     }
 
+    const adminSupabase = createAdminClient();
+
     // Verify ownership
-    const { data: event, error: eventError } = await supabase
+    const { data: event, error: eventError } = await adminSupabase
       .from('events')
       .select('id')
       .eq('id', eventId)
@@ -39,7 +42,7 @@ export async function GET(
       );
     }
 
-    const { data: fields, error } = await supabase
+    const { data: fields, error } = await adminSupabase
       .from('rsvp_fields')
       .select('*')
       .eq('event_id', eventId)
@@ -81,8 +84,10 @@ export async function PUT(
       );
     }
 
+    const adminSupabase = createAdminClient();
+
     // Verify ownership
-    const { data: event, error: eventError } = await supabase
+    const { data: event, error: eventError } = await adminSupabase
       .from('events')
       .select('id')
       .eq('id', eventId)
@@ -106,7 +111,7 @@ export async function PUT(
     }
 
     // Delete existing RSVP fields for this event
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminSupabase
       .from('rsvp_fields')
       .delete()
       .eq('event_id', eventId);
@@ -142,7 +147,7 @@ export async function PUT(
         });
       }
 
-      const { error: insertError } = await supabase
+      const { error: insertError } = await adminSupabase
         .from('rsvp_fields')
         .insert(fields);
 
@@ -155,7 +160,7 @@ export async function PUT(
     }
 
     // Return the newly inserted fields
-    const { data: updatedFields, error: fetchError } = await supabase
+    const { data: updatedFields, error: fetchError } = await adminSupabase
       .from('rsvp_fields')
       .select('*')
       .eq('event_id', eventId)
