@@ -41,7 +41,7 @@ export default function FeaturesGrid() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             All the features you need for your event
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl text-neutral-400">
             Everything from design to delivery, all in one platform.
           </p>
         </div>

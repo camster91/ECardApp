@@ -1,20 +1,25 @@
 import Image from "next/image";
 import type { Event } from "@/types/database";
+import { isValidHexColor } from "@/lib/utils";
 
 interface EventHeroProps {
   event: Event;
 }
 
 export function EventHero({ event }: EventHeroProps) {
+  const primaryColor = isValidHexColor(event.customization?.primaryColor ?? "")
+    ? event.customization.primaryColor
+    : "#7c3aed";
+
   if (!event.design_url) {
     return (
       <div
         className="flex h-64 items-center justify-center rounded-xl"
-        style={{ backgroundColor: event.customization.primaryColor + "20" }}
+        style={{ backgroundColor: primaryColor + "20" }}
       >
         <h1
           className="text-3xl font-bold"
-          style={{ color: event.customization.primaryColor }}
+          style={{ color: primaryColor }}
         >
           {event.title}
         </h1>

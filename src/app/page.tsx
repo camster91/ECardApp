@@ -27,7 +27,7 @@ export default function HomePage() {
         <Testimonials />
 
         {/* Pricing preview */}
-        <section className="bg-neutral-50 py-4">
+        <section className="bg-neutral-50 py-20">
           <div className="mx-auto max-w-6xl px-4 text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
               Simple, transparent pricing

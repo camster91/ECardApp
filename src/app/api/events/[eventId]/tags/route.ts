@@ -11,6 +11,16 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Verify ownership
+    const { data: event } = await supabase
+      .from("events")
+      .select("id")
+      .eq("id", eventId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
     const { data: tags, error } = await supabase
       .from("guest_tags")
       .select("*")

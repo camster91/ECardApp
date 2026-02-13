@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getInitials } from "@/lib/utils";
+import { Menu } from "lucide-react";
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -15,8 +20,14 @@ export function DashboardHeader() {
   }, []);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-white px-6">
-      <div />
+    <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 sm:px-6">
+      <button
+        onClick={onMenuToggle}
+        className="rounded-lg p-2 hover:bg-neutral-100 md:hidden"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+      <div className="hidden md:block" />
       <div className="flex items-center gap-3">
         {email && (
           <>

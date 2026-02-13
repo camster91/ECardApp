@@ -9,12 +9,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import { isValidRelativePath } from "@/lib/utils";
 
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
+  const rawRedirect = searchParams.get("redirect") || "/dashboard";
+  const redirect = isValidRelativePath(rawRedirect) ? rawRedirect : "/dashboard";
 
   const {
     register,

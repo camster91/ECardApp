@@ -1,4 +1,4 @@
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, escapeHtml } from "@/lib/utils";
 
 interface InvitationEmailParams {
   guestName: string;
@@ -15,19 +15,23 @@ export function buildInvitationEmail(params: InvitationEmailParams): {
 } {
   const { guestName, eventTitle, eventDate, locationName, rsvpUrl } = params;
 
-  const subject = `You're invited: ${eventTitle}`;
+  const safeGuestName = escapeHtml(guestName);
+  const safeEventTitle = escapeHtml(eventTitle);
+  const safeLocationName = locationName ? escapeHtml(locationName) : null;
+
+  const subject = `You're invited: ${safeEventTitle}`;
 
   const dateBlock = eventDate
     ? `<tr>
         <td style="padding:4px 0;color:#6b7280;font-size:14px;">When</td>
-        <td style="padding:4px 0 4px 12px;font-size:14px;">${formatDateTime(eventDate)}</td>
+        <td style="padding:4px 0 4px 12px;font-size:14px;">${escapeHtml(formatDateTime(eventDate))}</td>
       </tr>`
     : "";
 
-  const locationBlock = locationName
+  const locationBlock = safeLocationName
     ? `<tr>
         <td style="padding:4px 0;color:#6b7280;font-size:14px;">Where</td>
-        <td style="padding:4px 0 4px 12px;font-size:14px;">${locationName}</td>
+        <td style="padding:4px 0 4px 12px;font-size:14px;">${safeLocationName}</td>
       </tr>`
     : "";
 
@@ -49,10 +53,10 @@ export function buildInvitationEmail(params: InvitationEmailParams): {
           <tr>
             <td style="padding:24px;">
               <p style="margin:0 0 16px;font-size:15px;color:#374151;">
-                Hi ${guestName},
+                Hi ${safeGuestName},
               </p>
               <p style="margin:0 0 20px;font-size:15px;color:#374151;">
-                You've been invited to <strong>${eventTitle}</strong>.
+                You've been invited to <strong>${safeEventTitle}</strong>.
               </p>
 
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">

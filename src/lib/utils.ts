@@ -43,3 +43,20 @@ export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
   return str.slice(0, length) + "...";
 }
+
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+export function isValidHexColor(color: string): boolean {
+  return /^#[0-9A-Fa-f]{3,8}$/.test(color);
+}
+
+export function isValidRelativePath(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//") && !path.includes(":");
+}

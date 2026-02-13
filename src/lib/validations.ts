@@ -28,7 +28,7 @@ export const eventCreateSchema = z.object({
   location_name: z.string().max(200).optional(),
   location_address: z.string().max(500).optional(),
   design_url: z.string().optional(),
-  design_type: z.enum(["image", "pdf"]).default("image"),
+  design_type: z.enum(["image", "pdf", "upload"]).default("upload"),
   customization: z
     .object({
       primaryColor: z.string().default("#7c3aed"),
@@ -39,6 +39,7 @@ export const eventCreateSchema = z.object({
       showCountdown: z.boolean().default(true),
     })
     .optional(),
+  status: z.enum(["draft", "published"]).default("draft"),
 });
 
 export const eventUpdateSchema = eventCreateSchema.partial();

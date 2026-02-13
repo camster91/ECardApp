@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rsvpFieldSchema } from '@/lib/validations';
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
@@ -117,19 +118,29 @@ export async function PUT(
       );
     }
 
-    // Insert new RSVP fields
+    // Validate and insert new RSVP fields
     if (body.length > 0) {
-      const fields = body.map((field: Record<string, unknown>, index: number) => ({
-        event_id: eventId,
-        field_name: field.field_name,
-        field_type: field.field_type,
-        field_label: field.field_label,
-        is_required: field.is_required ?? false,
-        is_enabled: field.is_enabled ?? true,
-        sort_order: index,
-        options: field.options ?? null,
-        placeholder: field.placeholder ?? null,
-      }));
+      const fields = [];
+      for (let index = 0; index < body.length; index++) {
+        const parsed = rsvpFieldSchema.safeParse(body[index]);
+        if (!parsed.success) {
+          return NextResponse.json(
+            { error: `Invalid field at index ${index}`, details: parsed.error.flatten() },
+            { status: 400 }
+          );
+        }
+        fields.push({
+          event_id: eventId,
+          field_name: parsed.data.field_name,
+          field_type: parsed.data.field_type,
+          field_label: parsed.data.field_label,
+          is_required: parsed.data.is_required,
+          is_enabled: parsed.data.is_enabled,
+          sort_order: index,
+          options: parsed.data.options ?? null,
+          placeholder: parsed.data.placeholder ?? null,
+        });
+      }
 
       const { error: insertError } = await supabase
         .from('rsvp_fields')

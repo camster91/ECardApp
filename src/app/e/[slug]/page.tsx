@@ -4,6 +4,7 @@ import { EventHero } from "@/components/public-event/EventHero";
 import { EventDetails } from "@/components/public-event/EventDetails";
 import { RSVPForm } from "@/components/public-event/RSVPForm";
 import { LocationMap } from "@/components/public-event/LocationMap";
+import { isValidHexColor } from "@/lib/utils";
 import type { Metadata } from "next";
 
 interface Props {
@@ -52,10 +53,17 @@ export default async function PublicEventPage({ params }: Props) {
     .eq("event_id", event.id)
     .order("sort_order", { ascending: true });
 
+  const safeBgColor = isValidHexColor(event.customization?.backgroundColor ?? "")
+    ? event.customization.backgroundColor
+    : "#ffffff";
+  const safePrimaryColor = isValidHexColor(event.customization?.primaryColor ?? "")
+    ? event.customization.primaryColor
+    : "#7c3aed";
+
   return (
     <div
       className="min-h-screen"
-      style={{ backgroundColor: event.customization?.backgroundColor || "#ffffff" }}
+      style={{ backgroundColor: safeBgColor }}
     >
       <div className="mx-auto max-w-2xl px-4 py-8">
         {/* Event Design */}
@@ -81,7 +89,7 @@ export default async function PublicEventPage({ params }: Props) {
           <RSVPForm
             eventSlug={slug}
             fields={rsvpFields || []}
-            primaryColor={event.customization?.primaryColor || "#7c3aed"}
+            primaryColor={safePrimaryColor}
           />
         </div>
 

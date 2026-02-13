@@ -68,27 +68,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, description, event_date, event_end_date, location_name, location_address, design_url, design_type, customization } = parsed.data;
-    const slug = generateSlug(title);
+    const { title, description, event_date, event_end_date, location_name, location_address, design_url, design_type, customization, status } = parsed.data;
 
-    const { data: event, error: insertError } = await supabase
-      .from('events')
-      .insert({
-        user_id: user.id,
-        title,
-        slug,
-        description: description ?? null,
-        event_date: event_date ?? null,
-        event_end_date: event_end_date ?? null,
-        location_name: location_name ?? null,
-        location_address: location_address ?? null,
-        design_url: design_url ?? null,
-        design_type: design_type ?? 'upload',
-        customization: customization ?? {},
-        status: 'draft',
-      })
-      .select()
-      .single();
+    // Retry slug generation on collision (unique constraint)
+    let event = null;
+    let insertError = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const slug = generateSlug(title);
+      const { data, error } = await supabase
+        .from('events')
+        .insert({
+          user_id: user.id,
+          title,
+          slug,
+          description: description ?? null,
+          event_date: event_date ?? null,
+          event_end_date: event_end_date ?? null,
+          location_name: location_name ?? null,
+          location_address: location_address ?? null,
+          design_url: design_url ?? null,
+          design_type: design_type ?? 'upload',
+          customization: customization ?? {},
+          status: status ?? 'draft',
+        })
+        .select()
+        .single();
+
+      if (!error) {
+        event = data;
+        insertError = null;
+        break;
+      }
+
+      // If not a unique constraint violation, don't retry
+      if (error.code !== '23505') {
+        insertError = error;
+        break;
+      }
+      insertError = error;
+    }
 
     if (insertError) {
       return NextResponse.json(

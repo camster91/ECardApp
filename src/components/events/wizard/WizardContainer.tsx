@@ -304,9 +304,9 @@ export default function WizardContainer({
                   <div
                     className={cn(
                       'flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors',
-                      isActive && 'border-indigo-600 bg-indigo-600 text-white',
-                      isCompleted && 'border-indigo-600 bg-indigo-100 text-indigo-700',
-                      !isActive && !isCompleted && 'border-gray-300 bg-white text-gray-400'
+                      isActive && 'border-brand-600 bg-brand-600 text-white',
+                      isCompleted && 'border-brand-600 bg-brand-100 text-brand-700',
+                      !isActive && !isCompleted && 'border-neutral-300 bg-white text-neutral-400'
                     )}
                   >
                     {isCompleted ? (
@@ -320,9 +320,9 @@ export default function WizardContainer({
                   <span
                     className={cn(
                       'text-xs font-medium',
-                      isActive && 'text-indigo-600',
-                      isCompleted && 'text-indigo-600',
-                      !isActive && !isCompleted && 'text-gray-400'
+                      isActive && 'text-brand-600',
+                      isCompleted && 'text-brand-600',
+                      !isActive && !isCompleted && 'text-neutral-400'
                     )}
                   >
                     {step.label}
@@ -332,7 +332,7 @@ export default function WizardContainer({
                   <div
                     className={cn(
                       'h-0.5 w-full -mt-4',
-                      currentStep > step.number ? 'bg-indigo-600' : 'bg-gray-200'
+                      currentStep > step.number ? 'bg-brand-600' : 'bg-neutral-200'
                     )}
                   />
                 )}
@@ -350,7 +350,7 @@ export default function WizardContainer({
       )}
 
       {/* ── Step content ────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
         {renderStep()}
       </div>
 
@@ -364,8 +364,8 @@ export default function WizardContainer({
             className={cn(
               'rounded-lg px-5 py-2.5 text-sm font-medium transition-colors',
               currentStep === 1
-                ? 'cursor-not-allowed text-gray-300'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'cursor-not-allowed text-neutral-300'
+                : 'text-neutral-600 hover:bg-neutral-100'
             )}
           >
             Back
@@ -376,7 +376,7 @@ export default function WizardContainer({
             onClick={goNext}
             disabled={currentStep === 2 && !formData.title.trim()}
             className={cn(
-              'rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700',
+              'rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-700',
               currentStep === 2 && !formData.title.trim() && 'cursor-not-allowed opacity-50'
             )}
           >
