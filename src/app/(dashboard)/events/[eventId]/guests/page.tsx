@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { GuestTable } from "@/components/guests/GuestTable";
 import { AddGuestModal } from "@/components/guests/AddGuestModal";
 import { Button } from "@/components/ui/Button";
-import { UserPlus, ArrowLeft } from "lucide-react";
+import { UserPlus, ArrowLeft, Mail, Loader2 } from "lucide-react";
 import Link from "next/link";
 import type { Guest } from "@/types/database";
 
@@ -17,6 +16,7 @@ export default function GuestsPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+  const [sending, setSending] = useState(false);
 
   const fetchGuests = useCallback(async () => {
     setLoading(true);
@@ -42,6 +42,44 @@ export default function GuestsPage() {
     setEditingGuest(null);
   }
 
+  async function handleSendInvites() {
+    const pendingCount = guests.filter(
+      (g) => g.email && (g.invite_status === "not_sent" || g.invite_status === "failed")
+    ).length;
+
+    if (pendingCount === 0) {
+      alert("No guests with unsent invitations.");
+      return;
+    }
+
+    if (!confirm(`Send invitations to ${pendingCount} guest${pendingCount !== 1 ? "s" : ""}?`)) {
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await fetch(`/api/events/${eventId}/send-invites`, {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to send invitations.");
+      } else {
+        alert(`Sent: ${data.sent}, Failed: ${data.failed}`);
+        fetchGuests();
+      }
+    } catch {
+      alert("Failed to send invitations.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const hasUnsent = guests.some(
+    (g) => g.email && (g.invite_status === "not_sent" || g.invite_status === "failed")
+  );
+
   return (
     <div>
       <div className="mb-6">
@@ -59,10 +97,22 @@ export default function GuestsPage() {
               {guests.length} guest{guests.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <Button onClick={() => setModalOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add Guest
-          </Button>
+          <div className="flex items-center gap-2">
+            {hasUnsent && (
+              <Button variant="outline" onClick={handleSendInvites} disabled={sending}>
+                {sending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="mr-2 h-4 w-4" />
+                )}
+                Send Invites
+              </Button>
+            )}
+            <Button onClick={() => setModalOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Guest
+            </Button>
+          </div>
         </div>
       </div>
 

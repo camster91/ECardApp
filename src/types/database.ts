@@ -9,6 +9,7 @@ export type RSVPFieldType =
   | "email"
   | "phone";
 export type RSVPStatus = "attending" | "not_attending" | "maybe" | "pending";
+export type InviteStatus = "not_sent" | "sent" | "failed";
 
 export interface EventCustomization {
   primaryColor: string;
@@ -63,6 +64,8 @@ export interface Guest {
   email: string | null;
   phone: string | null;
   notes: string | null;
+  invite_status: InviteStatus;
+  invite_sent_at: string | null;
   created_at: string;
   updated_at: string;
 }

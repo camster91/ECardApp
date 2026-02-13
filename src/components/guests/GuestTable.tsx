@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Trash2, Edit2 } from "lucide-react";
-import type { Guest } from "@/types/database";
+import type { Guest, InviteStatus } from "@/types/database";
+
+const inviteBadge: Record<InviteStatus, { label: string; variant: "secondary" | "success" | "destructive" }> = {
+  not_sent: { label: "Not Sent", variant: "secondary" },
+  sent: { label: "Sent", variant: "success" },
+  failed: { label: "Failed", variant: "destructive" },
+};
 
 interface GuestTableProps {
   guests: Guest[];
@@ -46,6 +51,16 @@ export function GuestTable({ guests, eventId, onEdit, onRefresh }: GuestTablePro
       render: (item) => (
         <span className="text-muted-foreground">{item.phone || "\u2014"}</span>
       ),
+    },
+    {
+      key: "invite_status",
+      header: "Invite",
+      render: (item) => {
+        const guest = item as Guest;
+        if (!guest.email) return <span className="text-muted-foreground">\u2014</span>;
+        const badge = inviteBadge[guest.invite_status] || inviteBadge.not_sent;
+        return <Badge variant={badge.variant}>{badge.label}</Badge>;
+      },
     },
     {
       key: "actions",
