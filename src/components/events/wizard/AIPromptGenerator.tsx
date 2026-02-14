@@ -95,7 +95,6 @@ export default function AIPromptGenerator() {
       setCopied(true);
       copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
       const textarea = document.createElement('textarea');
       textarea.value = generatedPrompt;
       textarea.style.position = 'fixed';
@@ -116,50 +115,67 @@ export default function AIPromptGenerator() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-4 py-2.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-50"
+        className="group flex w-full items-center gap-4 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 p-5 text-left transition-all hover:border-indigo-300 hover:shadow-md"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm transition-transform group-hover:scale-105">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+          </svg>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-base font-semibold text-gray-900">Generate with AI</p>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Build a perfect prompt for ChatGPT or Gemini to create your design
+          </p>
+        </div>
+        <svg className="h-5 w-5 shrink-0 text-gray-400 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
-        Generate AI Prompt
       </button>
     );
   }
 
   return (
-    <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50/80 to-white p-5">
+    <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-6 shadow-sm">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-indigo-900">AI Prompt Generator</h3>
-          <p className="mt-0.5 text-xs text-indigo-700">
-            Build a prompt, then paste it into ChatGPT or Gemini to generate your design.
-          </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">AI Prompt Generator</h3>
+            <p className="text-sm text-gray-500">
+              Describe your vibe and we&apos;ll craft the perfect prompt
+            </p>
+          </div>
         </div>
         <button
           type="button"
           aria-label="Close AI prompt generator"
           onClick={() => setIsOpen(false)}
-          className="rounded-md p-1 text-indigo-400 transition-colors hover:bg-indigo-100 hover:text-indigo-600"
+          className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
       {/* Form */}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-5 sm:grid-cols-2">
         {/* Event Type */}
         <div>
-          <label htmlFor="ai-event-type" className="block text-xs font-medium text-gray-700">
-            Event Type
+          <label htmlFor="ai-event-type" className="block text-sm font-medium text-gray-700">
+            What&apos;s the occasion?
           </label>
           <select
             id="ai-event-type"
             value={form.eventType}
             onChange={(e) => updateField('eventType', e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
           >
             {EVENT_TYPES.map((t) => (
               <option key={t} value={t}>{t}</option>
@@ -169,14 +185,14 @@ export default function AIPromptGenerator() {
 
         {/* Style */}
         <div>
-          <label htmlFor="ai-style" className="block text-xs font-medium text-gray-700">
-            Style / Mood
+          <label htmlFor="ai-style" className="block text-sm font-medium text-gray-700">
+            Pick a style
           </label>
           <select
             id="ai-style"
             value={form.style}
             onChange={(e) => updateField('style', e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
           >
             {STYLES.map((s) => (
               <option key={s.label} value={s.label}>{s.label}</option>
@@ -186,50 +202,55 @@ export default function AIPromptGenerator() {
 
         {/* Colors */}
         <div>
-          <label htmlFor="ai-colors" className="block text-xs font-medium text-gray-700">
-            Color Palette
+          <label htmlFor="ai-colors" className="block text-sm font-medium text-gray-700">
+            Color palette
           </label>
           <input
             id="ai-colors"
             type="text"
+            maxLength={100}
             value={form.colors}
             onChange={(e) => updateField('colors', e.target.value)}
             placeholder="e.g. gold and navy blue"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            className="mt-1.5 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
           />
         </div>
 
         {/* Extras */}
         <div>
-          <label htmlFor="ai-extras" className="block text-xs font-medium text-gray-700">
-            Special Elements <span className="font-normal text-gray-400">(optional)</span>
+          <label htmlFor="ai-extras" className="block text-sm font-medium text-gray-700">
+            Special touches <span className="font-normal text-gray-400">(optional)</span>
           </label>
           <input
             id="ai-extras"
             type="text"
+            maxLength={100}
             value={form.extras}
             onChange={(e) => updateField('extras', e.target.value)}
-            placeholder="e.g. roses, star patterns"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            placeholder="e.g. roses, star patterns, winter theme"
+            className="mt-1.5 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
           />
         </div>
       </div>
 
       {/* Orientation toggle */}
-      <div className="mt-4">
-        <span id="orientation-label" className="block text-xs font-medium text-gray-700">Orientation</span>
-        <div className="mt-1.5 flex gap-2" role="radiogroup" aria-labelledby="orientation-label">
+      <div className="mt-5">
+        <span id="orientation-label" className="block text-sm font-medium text-gray-700">Orientation</span>
+        <div className="mt-2 flex gap-3" role="radiogroup" aria-labelledby="orientation-label">
           <button
             type="button"
             role="radio"
             aria-checked={form.orientation === 'portrait'}
             onClick={() => updateField('orientation', 'portrait')}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
               form.orientation === 'portrait'
-                ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3" />
+            </svg>
             Portrait (1080&times;1350)
           </button>
           <button
@@ -237,12 +258,15 @@ export default function AIPromptGenerator() {
             role="radio"
             aria-checked={form.orientation === 'landscape'}
             onClick={() => updateField('orientation', 'landscape')}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
               form.orientation === 'landscape'
-                ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
+            <svg className="h-4 w-4 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3" />
+            </svg>
             Landscape (1200&times;630)
           </button>
         </div>
@@ -252,40 +276,40 @@ export default function AIPromptGenerator() {
       <button
         type="button"
         onClick={handleGenerate}
-        className="mt-4 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+        className="mt-6 w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:from-indigo-700 hover:to-purple-700 hover:shadow-md"
       >
         Generate Prompt
       </button>
 
       {/* Output */}
       {generatedPrompt && (
-        <div className="mt-4 space-y-3">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <pre className="whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
+        <div className="mt-6 space-y-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
               {generatedPrompt}
             </pre>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={handleCopy}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+              className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium transition-all ${
                 copied
                   ? 'border-green-300 bg-green-50 text-green-700'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-sm'
               }`}
             >
               {copied ? (
                 <>
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                   Copied!
                 </>
               ) : (
                 <>
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
                   </svg>
                   Copy Prompt
@@ -296,10 +320,10 @@ export default function AIPromptGenerator() {
               href="https://chatgpt.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 hover:shadow-sm"
             >
               Open ChatGPT
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
               </svg>
             </a>
@@ -307,10 +331,10 @@ export default function AIPromptGenerator() {
               href="https://gemini.google.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 hover:shadow-sm"
             >
               Open Gemini
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
               </svg>
             </a>

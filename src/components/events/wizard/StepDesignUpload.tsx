@@ -89,32 +89,47 @@ export default function StepDesignUpload({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Upload Your Design</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Upload an image or design for your event card. Supported formats: JPEG, PNG, GIF, WebP, SVG.
+        <h2 className="text-2xl font-bold text-gray-900">Upload Your Design</h2>
+        <p className="mt-2 text-base text-gray-500">
+          Add the image that will be your invitation&apos;s centerpiece.
         </p>
       </div>
 
       {/* Design tips */}
-      <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-        <h3 className="text-sm font-semibold text-indigo-900">Create your perfect invitation design, then upload it here</h3>
-        <ul className="mt-2 space-y-1.5 text-sm text-indigo-800">
-          <li>
-            <a
-              href="https://www.canva.com/invitations/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium underline decoration-indigo-400 hover:text-indigo-600"
-            >
-              Canva Invitation Maker
-            </a>{' '}
-            — free templates you can customize in minutes
+      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 to-purple-50/40 p-5">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+            </svg>
+          </div>
+          <h3 className="text-base font-semibold text-gray-900">Need a design? Here are some ideas</h3>
+        </div>
+        <ul className="mt-3 space-y-2 text-sm text-gray-600">
+          <li className="flex items-start gap-2">
+            <span className="mt-1 block h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+            <span>
+              <a
+                href="https://www.canva.com/invitations/templates/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-indigo-600 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-700"
+              >
+                Canva Invitation Templates
+              </a>{' '}
+              — hundreds of free templates to customize
+            </span>
           </li>
-          <li>AI image generators (DALL-E, Midjourney, Adobe Firefly) can create unique designs from a text prompt</li>
-          <li>Recommended size: <strong>1080&times;1350px</strong> (portrait) or <strong>1200&times;630px</strong> (landscape)</li>
-          <li>Export as <strong>PNG or JPG</strong>, max 10MB</li>
+          <li className="flex items-start gap-2">
+            <span className="mt-1 block h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+            <span>Use the AI prompt generator below to create a unique design with ChatGPT or Gemini</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-1 block h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+            <span>Best at <strong>1080&times;1350px</strong> (portrait) or <strong>1200&times;630px</strong> (landscape) &middot; PNG or JPG &middot; max 10MB</span>
+          </li>
         </ul>
       </div>
 
@@ -126,23 +141,29 @@ export default function StepDesignUpload({
         <button
           type="button"
           onClick={() => onUpdate('design_type', 'upload')}
-          className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium transition-all ${
             designType === 'upload'
-              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-              : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+              ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+              : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50'
           }`}
         >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
           Upload Image
         </button>
         <button
           type="button"
           onClick={() => onUpdate('design_type', 'url')}
-          className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium transition-all ${
             designType === 'url'
-              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-              : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+              ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+              : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50'
           }`}
         >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.04a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.343 8.59" />
+          </svg>
           Image URL
         </button>
       </div>
@@ -155,10 +176,10 @@ export default function StepDesignUpload({
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-              className={`relative flex min-h-[240px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
+              className={`relative flex min-h-[340px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all ${
                 dragActive
-                  ? 'border-indigo-500 bg-indigo-50'
-                  : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                  ? 'border-indigo-500 bg-indigo-50 shadow-inner'
+                  : 'border-gray-300 bg-gray-50/50 hover:border-indigo-300 hover:bg-indigo-50/30'
               }`}
             >
               <input
@@ -170,31 +191,34 @@ export default function StepDesignUpload({
               />
 
               {isUploading ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
-                  <p className="text-sm font-medium text-gray-600">Uploading...</p>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+                  <p className="text-base font-medium text-gray-600">Uploading your design...</p>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-3 p-6 text-center">
-                  <svg
-                    className="h-12 w-12 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
-                    />
-                  </svg>
+                <div className="flex flex-col items-center gap-4 p-8 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+                    <svg
+                      className="h-8 w-8"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
+                      />
+                    </svg>
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">
+                    <p className="text-base font-semibold text-gray-700">
                       Drop your design here, or click to browse
                     </p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Max file size: 10MB
+                    <p className="mt-1.5 text-sm text-gray-500">
+                      JPEG, PNG, GIF, WebP, or SVG &middot; Max 10MB
                     </p>
                   </div>
                 </div>
@@ -202,7 +226,7 @@ export default function StepDesignUpload({
             </div>
           ) : (
             /* Preview uploaded image */
-            <div className="relative overflow-hidden rounded-xl border border-gray-200">
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
               <img
                 src={designUrl}
                 alt="Event design preview"
@@ -211,9 +235,9 @@ export default function StepDesignUpload({
               <button
                 type="button"
                 onClick={removeDesign}
-                className="absolute right-3 top-3 rounded-full bg-black/60 p-1.5 text-white transition-colors hover:bg-black/80"
+                className="absolute right-3 top-3 rounded-full bg-black/60 p-2 text-white transition-all hover:bg-black/80 hover:scale-105"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -232,10 +256,10 @@ export default function StepDesignUpload({
             value={designUrl}
             onChange={(e) => onUpdate('design_url', e.target.value)}
             placeholder="https://example.com/your-design.png"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
           />
           {designUrl && (
-            <div className="overflow-hidden rounded-xl border border-gray-200">
+            <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
               <img
                 src={designUrl}
                 alt="Event design preview"
@@ -251,13 +275,13 @@ export default function StepDesignUpload({
 
       {/* Error display */}
       {uploadError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {uploadError}
         </div>
       )}
 
       {/* Optional skip note */}
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-sm text-gray-400">
         You can skip this step and add a design later.
       </p>
     </div>
