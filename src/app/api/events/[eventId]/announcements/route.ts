@@ -5,7 +5,7 @@ import { getResendClient } from "@/lib/resend";
 import { buildAnnouncementEmail } from "@/lib/email-templates";
 import { buildAnnouncementSms } from "@/lib/sms-templates";
 import { announcementSchema } from "@/lib/validations";
-import { isTwilioConfigured, getTwilioClient, getTwilioFromNumber } from "@/lib/twilio";
+import { isTwilioConfigured, getTwilioClient, getTwilioSendOptions } from "@/lib/twilio";
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
@@ -151,8 +151,8 @@ export async function POST(
           const twilioClient = getTwilioClient();
           await twilioClient.messages.create({
             body: smsBody,
-            from: getTwilioFromNumber(),
             to: guest.phone,
+            ...getTwilioSendOptions(),
           });
           sentCount++;
         } catch {

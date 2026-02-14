@@ -10,10 +10,8 @@ export function getTwilioClient() {
     const authToken = process.env.TWILIO_AUTH_TOKEN;
 
     if (accountSid && apiKeySid && apiKeySecret) {
-      // Use API Key authentication
       client = twilio(apiKeySid, apiKeySecret, { accountSid });
     } else if (accountSid && authToken) {
-      // Use Account SID + Auth Token authentication
       client = twilio(accountSid, authToken);
     } else {
       throw new Error(
@@ -24,19 +22,23 @@ export function getTwilioClient() {
   return client;
 }
 
-export function getTwilioFromNumber(): string {
-  const num = process.env.TWILIO_FROM_NUMBER;
-  if (!num) {
-    throw new Error("Missing TWILIO_FROM_NUMBER environment variable");
+export function getTwilioSendOptions(): { messagingServiceSid: string } | { from: string } {
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+  if (messagingServiceSid) {
+    return { messagingServiceSid };
   }
-  return num;
+  const fromNumber = process.env.TWILIO_FROM_NUMBER;
+  if (fromNumber) {
+    return { from: fromNumber };
+  }
+  throw new Error("Missing TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM_NUMBER");
 }
 
 export function isTwilioConfigured(): boolean {
   const hasAccountSid = !!process.env.TWILIO_ACCOUNT_SID;
   const hasAuthToken = !!process.env.TWILIO_AUTH_TOKEN;
   const hasApiKey = !!process.env.TWILIO_API_KEY_SID && !!process.env.TWILIO_API_KEY_SECRET;
-  const hasFromNumber = !!process.env.TWILIO_FROM_NUMBER;
+  const hasSender = !!process.env.TWILIO_MESSAGING_SERVICE_SID || !!process.env.TWILIO_FROM_NUMBER;
 
-  return hasAccountSid && (hasAuthToken || hasApiKey) && hasFromNumber;
+  return hasAccountSid && (hasAuthToken || hasApiKey) && hasSender;
 }

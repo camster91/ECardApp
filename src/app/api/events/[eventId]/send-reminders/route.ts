@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient } from "@/lib/resend";
 import { buildReminderEmail } from "@/lib/email-templates";
 import { buildReminderSms } from "@/lib/sms-templates";
-import { isTwilioConfigured, getTwilioClient, getTwilioFromNumber } from "@/lib/twilio";
+import { isTwilioConfigured, getTwilioClient, getTwilioSendOptions } from "@/lib/twilio";
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
@@ -115,8 +115,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
           const twilioClient = getTwilioClient();
           await twilioClient.messages.create({
             body: smsBody,
-            from: getTwilioFromNumber(),
             to: guest.phone,
+            ...getTwilioSendOptions(),
           });
           smsOk = true;
           smsSent++;
