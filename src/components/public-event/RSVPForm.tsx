@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { createClient } from "@/lib/supabase/client";
 import type { RSVPField } from "@/types/database";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,32 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-fill name and email if user is signed in
+  useEffect(() => {
+    async function prefill() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const name = user.user_metadata?.full_name
+            || user.user_metadata?.name
+            || user.email?.split("@")[0]
+            || "";
+          if (name && !formData["respondent_name"]) {
+            setFormData((prev) => ({ ...prev, respondent_name: name }));
+          }
+          if (user.email && !formData["email"]) {
+            setFormData((prev) => ({ ...prev, email: user.email || "" }));
+          }
+        }
+      } catch {
+        // Not signed in, that's fine
+      }
+    }
+    prefill();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const enabledFields = fields
     .filter((f) => f.is_enabled)

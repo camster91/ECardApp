@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { formatRelative } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import type { EventComment } from '@/types/database';
 
 interface CommentsSectionProps {
@@ -34,6 +35,27 @@ export function CommentsSection({ eventSlug }: CommentsSectionProps) {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-fill name if user is signed in
+  useEffect(() => {
+    async function prefill() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && !authorName) {
+          const name = user.user_metadata?.full_name
+            || user.user_metadata?.name
+            || user.email?.split('@')[0]
+            || '';
+          if (name) setAuthorName(name);
+        }
+      } catch {
+        // Not signed in, that's fine
+      }
+    }
+    prefill();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchComments = useCallback(async () => {
     const res = await fetch(`/api/comments/${eventSlug}`);
