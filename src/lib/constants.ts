@@ -147,9 +147,9 @@ export const DEFAULT_RSVP_FIELDS = [
   },
   {
     field_name: "plus_one",
-    field_label: "Plus One Name",
+    field_label: "Names of Additional Guests",
     field_type: "text" as const,
-    placeholder: "Name of your plus one",
+    placeholder: "Enter names of your guests (one per line)",
     is_required: false,
     is_enabled: false,
     sort_order: 5,

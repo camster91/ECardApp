@@ -259,9 +259,18 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
               />
             );
           case "text":
-          default:
-            return field.field_name === "message" ||
-              field.field_name === "dietary" ? (
+          default: {
+            // Hide plus_one field when headcount is 1 or less
+            if (field.field_name === "plus_one") {
+              const currentHeadcount = parseInt(formData["headcount"] || "1", 10) || 1;
+              if (currentHeadcount <= 1) return null;
+            }
+
+            const useTextarea = field.field_name === "message"
+              || field.field_name === "dietary"
+              || field.field_name === "plus_one";
+
+            return useTextarea ? (
               <Textarea
                 key={field.id}
                 label={`${field.field_label}${field.is_required ? " *" : ""}`}
@@ -280,6 +289,7 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
                 required={field.is_required}
               />
             );
+          }
         }
       })}
 
