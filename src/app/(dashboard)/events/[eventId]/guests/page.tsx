@@ -47,7 +47,7 @@ export default function GuestsPage() {
 
   async function handleSendInvites() {
     const pendingCount = guests.filter(
-      (g) => g.email && (g.invite_status === "not_sent" || g.invite_status === "failed")
+      (g) => (g.email || g.phone) && (g.invite_status === "not_sent" || g.invite_status === "failed")
     ).length;
 
     if (pendingCount === 0) {
@@ -69,7 +69,12 @@ export default function GuestsPage() {
       if (!res.ok) {
         alert(data.error || "Failed to send invitations.");
       } else {
-        alert(`Sent: ${data.sent}, Failed: ${data.failed}`);
+        const parts: string[] = [];
+        if (data.sent > 0) parts.push(`${data.sent} email${data.sent !== 1 ? "s" : ""} sent`);
+        if (data.failed > 0) parts.push(`${data.failed} email${data.failed !== 1 ? "s" : ""} failed`);
+        if (data.sms_sent > 0) parts.push(`${data.sms_sent} SMS sent`);
+        if (data.sms_failed > 0) parts.push(`${data.sms_failed} SMS failed`);
+        alert(parts.join(", ") || "No invitations to send.");
         fetchGuests();
       }
     } catch {
@@ -81,7 +86,7 @@ export default function GuestsPage() {
 
   async function handleSendReminders() {
     const reminderCount = guests.filter(
-      (g) => g.email && g.invite_status === "sent" && !g.reminder_sent_at
+      (g) => (g.email || g.phone) && g.invite_status === "sent" && !g.reminder_sent_at
     ).length;
 
     if (reminderCount === 0) {
@@ -103,7 +108,12 @@ export default function GuestsPage() {
       if (!res.ok) {
         alert(data.error || "Failed to send reminders.");
       } else {
-        alert(`Sent: ${data.sent}, Failed: ${data.failed}`);
+        const parts: string[] = [];
+        if (data.sent > 0) parts.push(`${data.sent} email${data.sent !== 1 ? "s" : ""} sent`);
+        if (data.failed > 0) parts.push(`${data.failed} email${data.failed !== 1 ? "s" : ""} failed`);
+        if (data.sms_sent > 0) parts.push(`${data.sms_sent} SMS sent`);
+        if (data.sms_failed > 0) parts.push(`${data.sms_failed} SMS failed`);
+        alert(parts.join(", ") || "No reminders to send.");
         fetchGuests();
       }
     } catch {
@@ -114,11 +124,11 @@ export default function GuestsPage() {
   }
 
   const hasUnsent = guests.some(
-    (g) => g.email && (g.invite_status === "not_sent" || g.invite_status === "failed")
+    (g) => (g.email || g.phone) && (g.invite_status === "not_sent" || g.invite_status === "failed")
   );
 
   const hasRemindable = guests.some(
-    (g) => g.email && g.invite_status === "sent" && !g.reminder_sent_at
+    (g) => (g.email || g.phone) && g.invite_status === "sent" && !g.reminder_sent_at
   );
 
   return (

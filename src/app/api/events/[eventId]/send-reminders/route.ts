@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient } from "@/lib/resend";
 import { buildReminderEmail } from "@/lib/email-templates";
+import { buildReminderSms } from "@/lib/sms-templates";
+import { isTwilioConfigured, getTwilioClient, getTwilioFromNumber } from "@/lib/twilio";
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
@@ -44,61 +46,94 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     // Fetch guests that have been invited but not reminded
     const { data: guests, error: guestsError } = await adminSupabase
       .from("guests")
-      .select("id, name, email, invite_status, invite_token, reminder_sent_at")
+      .select("id, name, email, phone, invite_status, invite_token, reminder_sent_at")
       .eq("event_id", eventId)
       .eq("invite_status", "sent")
-      .not("email", "is", null)
       .is("reminder_sent_at", null);
 
     if (guestsError) {
       return NextResponse.json({ error: guestsError.message }, { status: 500 });
     }
 
-    if (!guests || guests.length === 0) {
-      return NextResponse.json({ sent: 0, failed: 0 });
+    // Filter to guests with email or phone
+    const sendableGuests = (guests || []).filter((g) => g.email || g.phone);
+    if (sendableGuests.length === 0) {
+      return NextResponse.json({ sent: 0, failed: 0, sms_sent: 0, sms_failed: 0 });
     }
 
     const resend = getResendClient();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const smsEnabled = isTwilioConfigured();
 
     let sent = 0;
     let failed = 0;
+    let smsSent = 0;
+    let smsFailed = 0;
 
-    for (const guest of guests) {
-      if (!guest.email) continue;
-
+    for (const guest of sendableGuests) {
       const rsvpUrl = guest.invite_token
         ? `${siteUrl}/e/${event.slug}?t=${guest.invite_token}`
         : `${siteUrl}/e/${event.slug}`;
 
-      const { subject, html } = buildReminderEmail({
-        guestName: guest.name,
-        eventTitle: event.title,
-        eventDate: event.event_date,
-        locationName: event.location_name,
-        rsvpUrl,
-      });
+      let emailOk = false;
+      let smsOk = false;
 
-      try {
-        await resend.emails.send({
-          from: "ECardApp <onboarding@resend.dev>",
-          to: guest.email,
-          subject,
-          html,
+      // Send email reminder
+      if (guest.email) {
+        const { subject, html } = buildReminderEmail({
+          guestName: guest.name,
+          eventTitle: event.title,
+          eventDate: event.event_date,
+          locationName: event.location_name,
+          rsvpUrl,
         });
 
+        try {
+          await resend.emails.send({
+            from: "ECardApp <onboarding@resend.dev>",
+            to: guest.email,
+            subject,
+            html,
+          });
+          emailOk = true;
+          sent++;
+        } catch {
+          failed++;
+        }
+      }
+
+      // Send SMS reminder
+      if (guest.phone && smsEnabled) {
+        const smsBody = buildReminderSms({
+          guestName: guest.name,
+          eventTitle: event.title,
+          eventDate: event.event_date,
+          rsvpUrl,
+        });
+
+        try {
+          const twilioClient = getTwilioClient();
+          await twilioClient.messages.create({
+            body: smsBody,
+            from: getTwilioFromNumber(),
+            to: guest.phone,
+          });
+          smsOk = true;
+          smsSent++;
+        } catch {
+          smsFailed++;
+        }
+      }
+
+      if (emailOk || smsOk) {
         await adminSupabase
           .from("guests")
           .update({ reminder_sent_at: new Date().toISOString() })
           .eq("id", guest.id);
-
-        sent++;
-      } catch {
-        failed++;
       }
     }
 
-    return NextResponse.json({ sent, failed });
+    return NextResponse.json({ sent, failed, sms_sent: smsSent, sms_failed: smsFailed });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

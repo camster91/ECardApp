@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient } from "@/lib/resend";
 import { buildAnnouncementEmail } from "@/lib/email-templates";
+import { buildAnnouncementSms } from "@/lib/sms-templates";
 import { announcementSchema } from "@/lib/validations";
+import { isTwilioConfigured, getTwilioClient, getTwilioFromNumber } from "@/lib/twilio";
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
@@ -90,12 +92,11 @@ export async function POST(
       );
     }
 
-    // Fetch all guests with email
+    // Fetch all guests with email or phone
     const { data: guests, error: guestsError } = await adminSupabase
       .from("guests")
-      .select("id, name, email")
-      .eq("event_id", eventId)
-      .not("email", "is", null);
+      .select("id, name, email, phone, invite_token")
+      .eq("event_id", eventId);
 
     if (guestsError) {
       return NextResponse.json({ error: guestsError.message }, { status: 500 });
@@ -103,31 +104,60 @@ export async function POST(
 
     const resend = getResendClient();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const rsvpUrl = `${siteUrl}/e/${event.slug}`;
+    const smsEnabled = isTwilioConfigured();
 
     let sentCount = 0;
 
     for (const guest of guests || []) {
-      if (!guest.email) continue;
+      if (!guest.email && !guest.phone) continue;
 
-      const { subject, html } = buildAnnouncementEmail({
-        guestName: guest.name,
-        eventTitle: event.title,
-        announcementSubject: parsed.data.subject,
-        announcementMessage: parsed.data.message,
-        rsvpUrl,
-      });
+      const rsvpUrl = guest.invite_token
+        ? `${siteUrl}/e/${event.slug}?t=${guest.invite_token}`
+        : `${siteUrl}/e/${event.slug}`;
 
-      try {
-        await resend.emails.send({
-          from: "ECardApp <onboarding@resend.dev>",
-          to: guest.email,
-          subject,
-          html,
+      // Send email
+      if (guest.email) {
+        const { subject, html } = buildAnnouncementEmail({
+          guestName: guest.name,
+          eventTitle: event.title,
+          announcementSubject: parsed.data.subject,
+          announcementMessage: parsed.data.message,
+          rsvpUrl,
         });
-        sentCount++;
-      } catch {
-        // Continue sending to other guests
+
+        try {
+          await resend.emails.send({
+            from: "ECardApp <onboarding@resend.dev>",
+            to: guest.email,
+            subject,
+            html,
+          });
+          sentCount++;
+        } catch {
+          // Continue sending to other guests
+        }
+      }
+
+      // Send SMS
+      if (guest.phone && smsEnabled) {
+        const smsBody = buildAnnouncementSms({
+          guestName: guest.name,
+          eventTitle: event.title,
+          subject: parsed.data.subject,
+          rsvpUrl,
+        });
+
+        try {
+          const twilioClient = getTwilioClient();
+          await twilioClient.messages.create({
+            body: smsBody,
+            from: getTwilioFromNumber(),
+            to: guest.phone,
+          });
+          sentCount++;
+        } catch {
+          // Continue sending to other guests
+        }
       }
     }
 
