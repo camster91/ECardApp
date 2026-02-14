@@ -4,6 +4,7 @@ import { EventHero } from "@/components/public-event/EventHero";
 import { EventDetails } from "@/components/public-event/EventDetails";
 import { RSVPForm } from "@/components/public-event/RSVPForm";
 import { LocationMap } from "@/components/public-event/LocationMap";
+import { CommentsSection } from "@/components/public-event/CommentsSection";
 import { isValidHexColor } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -91,6 +92,11 @@ export default async function PublicEventPage({ params }: Props) {
             fields={rsvpFields || []}
             primaryColor={safePrimaryColor}
           />
+        </div>
+
+        {/* Comments / Message Board */}
+        <div className="mt-8">
+          <CommentsSection eventSlug={slug} />
         </div>
 
         {/* Footer branding (free tier) */}

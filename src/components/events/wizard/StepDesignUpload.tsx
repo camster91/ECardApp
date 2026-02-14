@@ -96,6 +96,27 @@ export default function StepDesignUpload({
         </p>
       </div>
 
+      {/* Design tips */}
+      <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+        <h3 className="text-sm font-semibold text-indigo-900">Create your perfect invitation design, then upload it here</h3>
+        <ul className="mt-2 space-y-1.5 text-sm text-indigo-800">
+          <li>
+            <a
+              href="https://www.canva.com/invitations/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline decoration-indigo-400 hover:text-indigo-600"
+            >
+              Canva Invitation Maker
+            </a>{' '}
+            — free templates you can customize in minutes
+          </li>
+          <li>AI image generators (DALL-E, Midjourney, Adobe Firefly) can create unique designs from a text prompt</li>
+          <li>Recommended size: <strong>1080&times;1350px</strong> (portrait) or <strong>1200&times;630px</strong> (landscape)</li>
+          <li>Export as <strong>PNG or JPG</strong>, max 10MB</li>
+        </ul>
+      </div>
+
       {/* Design type selector */}
       <div className="flex gap-3">
         <button

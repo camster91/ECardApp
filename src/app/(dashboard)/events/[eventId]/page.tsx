@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { AnnouncementSection } from '@/components/dashboard/AnnouncementSection';
 
 interface EventDetailPageProps {
   params: Promise<{ eventId: string }>;
@@ -112,6 +113,15 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
               </svg>
               Manage Guests
+            </Link>
+            <Link
+              href={`/events/${eventId}/comments`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+              </svg>
+              Comments
             </Link>
             <PublishButton eventId={eventId} isPublished={isPublished} />
           </div>
@@ -226,6 +236,11 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </div>
           </div>
         )}
+
+        {/* Announcements section */}
+        {isPublished && (
+          <AnnouncementSection eventId={eventId} />
+        )}
       </div>
     </div>
   );
@@ -290,3 +305,4 @@ function PublishButton({
     </form>
   );
 }
+

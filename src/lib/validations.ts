@@ -70,6 +70,25 @@ export const guestSchema = z.object({
   notes: z.string().max(500).optional().or(z.literal("")),
 });
 
+export const guestBulkSchema = z.array(
+  z.object({
+    name: z.string().min(1, "Guest name is required").max(200),
+    email: z.string().email().optional().or(z.literal("")),
+    phone: z.string().max(20).optional().or(z.literal("")),
+    notes: z.string().max(500).optional().or(z.literal("")),
+  })
+).min(1, "At least one guest is required").max(500, "Maximum 500 guests per import");
+
+export const commentSchema = z.object({
+  author_name: z.string().min(1, "Name is required").max(100),
+  message: z.string().min(1, "Message is required").max(1000),
+});
+
+export const announcementSchema = z.object({
+  subject: z.string().min(1, "Subject is required").max(200),
+  message: z.string().min(1, "Message is required").max(5000),
+});
+
 export const rsvpSubmissionSchema = z.object({
   respondent_name: z.string().min(1, "Your name is required"),
   respondent_email: z.string().email().optional().or(z.literal("")),
@@ -84,4 +103,7 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type EventCreateInput = z.infer<typeof eventCreateSchema>;
 export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
 export type GuestInput = z.infer<typeof guestSchema>;
+export type GuestBulkInput = z.infer<typeof guestBulkSchema>;
+export type CommentInput = z.infer<typeof commentSchema>;
+export type AnnouncementInput = z.infer<typeof announcementSchema>;
 export type RSVPSubmissionInput = z.infer<typeof rsvpSubmissionSchema>;

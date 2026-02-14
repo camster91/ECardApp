@@ -1,5 +1,6 @@
 import { Calendar, MapPin, Clock } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
+import { AddToCalendar } from "@/components/public-event/AddToCalendar";
 import type { Event } from "@/types/database";
 
 interface EventDetailsProps {
@@ -50,6 +51,8 @@ export function EventDetails({ event }: EventDetailsProps) {
           <CountdownDisplay eventDate={event.event_date} />
         )}
       </div>
+
+      <AddToCalendar event={event} />
     </div>
   );
 }

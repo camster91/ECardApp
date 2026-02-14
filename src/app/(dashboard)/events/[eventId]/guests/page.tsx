@@ -4,8 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { GuestTable } from "@/components/guests/GuestTable";
 import { AddGuestModal } from "@/components/guests/AddGuestModal";
+import { ImportCSVModal } from "@/components/guests/ImportCSVModal";
 import { Button } from "@/components/ui/Button";
-import { UserPlus, ArrowLeft, Mail, Loader2 } from "lucide-react";
+import { UserPlus, ArrowLeft, Mail, Loader2, Upload, Bell } from "lucide-react";
 import Link from "next/link";
 import type { Guest } from "@/types/database";
 
@@ -15,8 +16,10 @@ export default function GuestsPage() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
   const [sending, setSending] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
 
   const fetchGuests = useCallback(async () => {
     setLoading(true);
@@ -76,8 +79,46 @@ export default function GuestsPage() {
     }
   }
 
+  async function handleSendReminders() {
+    const reminderCount = guests.filter(
+      (g) => g.email && g.invite_status === "sent" && !g.reminder_sent_at
+    ).length;
+
+    if (reminderCount === 0) {
+      alert("No guests eligible for reminders.");
+      return;
+    }
+
+    if (!confirm(`Send reminders to ${reminderCount} guest${reminderCount !== 1 ? "s" : ""}?`)) {
+      return;
+    }
+
+    setSendingReminders(true);
+    try {
+      const res = await fetch(`/api/events/${eventId}/send-reminders`, {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to send reminders.");
+      } else {
+        alert(`Sent: ${data.sent}, Failed: ${data.failed}`);
+        fetchGuests();
+      }
+    } catch {
+      alert("Failed to send reminders.");
+    } finally {
+      setSendingReminders(false);
+    }
+  }
+
   const hasUnsent = guests.some(
     (g) => g.email && (g.invite_status === "not_sent" || g.invite_status === "failed")
+  );
+
+  const hasRemindable = guests.some(
+    (g) => g.email && g.invite_status === "sent" && !g.reminder_sent_at
   );
 
   return (
@@ -98,6 +139,16 @@ export default function GuestsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {hasRemindable && (
+              <Button variant="outline" onClick={handleSendReminders} disabled={sendingReminders}>
+                {sendingReminders ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Bell className="mr-2 h-4 w-4" />
+                )}
+                Send Reminders
+              </Button>
+            )}
             {hasUnsent && (
               <Button variant="outline" onClick={handleSendInvites} disabled={sending}>
                 {sending ? (
@@ -108,6 +159,10 @@ export default function GuestsPage() {
                 Send Invites
               </Button>
             )}
+            <Button variant="outline" onClick={() => setCsvModalOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Import CSV
+            </Button>
             <Button onClick={() => setModalOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               Add Guest
@@ -134,6 +189,13 @@ export default function GuestsPage() {
         onClose={handleClose}
         eventId={eventId}
         guest={editingGuest}
+        onSuccess={fetchGuests}
+      />
+
+      <ImportCSVModal
+        open={csvModalOpen}
+        onClose={() => setCsvModalOpen(false)}
+        eventId={eventId}
         onSuccess={fetchGuests}
       />
     </div>

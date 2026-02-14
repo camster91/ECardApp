@@ -66,6 +66,7 @@ export interface Guest {
   notes: string | null;
   invite_status: InviteStatus;
   invite_sent_at: string | null;
+  reminder_sent_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -93,4 +94,21 @@ export interface RSVPResponse {
   response_data: Record<string, unknown>;
   headcount: number;
   submitted_at: string;
+}
+
+export interface EventComment {
+  id: string;
+  event_id: string;
+  author_name: string;
+  message: string;
+  created_at: string;
+}
+
+export interface EventAnnouncement {
+  id: string;
+  event_id: string;
+  subject: string;
+  message: string;
+  sent_to_count: number;
+  created_at: string;
 }
