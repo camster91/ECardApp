@@ -30,6 +30,8 @@ export interface EventCustomization {
   fontFamily: string;
   buttonStyle: string;
   showCountdown: boolean;
+  audioUrl: string;
+  logoUrl: string;
 }
 
 export interface RegistryLinkEntry {
@@ -118,6 +120,8 @@ function getInitialState(initialData?: Partial<WizardFormData>): WizardFormData 
       fontFamily: 'Inter',
       buttonStyle: 'rounded',
       showCountdown: true,
+      audioUrl: '',
+      logoUrl: '',
     },
     rsvp_fields: defaultRsvpFields,
     guests: [],

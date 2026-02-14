@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import type { EventCustomization } from './WizardContainer';
 
 interface StepCustomizeProps {
@@ -204,6 +205,162 @@ export default function StepCustomize({ customization, onUpdate }: StepCustomize
           </div>
         </div>
       </div>
+
+      {/* Media Uploads */}
+      <div className="space-y-5 border-t border-gray-200 pt-6">
+        <h3 className="text-base font-semibold text-gray-900">Media &amp; Branding</h3>
+
+        {/* Event Logo */}
+        <MediaUpload
+          label="Event Logo"
+          description="Upload a logo to display above your event design"
+          value={customization.logoUrl}
+          accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+          uploadType="image"
+          onUploaded={(url) => onUpdate('logoUrl', url)}
+          onRemove={() => onUpdate('logoUrl', '')}
+          previewMode="image"
+        />
+
+        {/* Background Image */}
+        <MediaUpload
+          label="Background Image"
+          description="Set a background image for your event page"
+          value={customization.backgroundImage}
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          uploadType="image"
+          onUploaded={(url) => onUpdate('backgroundImage', url)}
+          onRemove={() => onUpdate('backgroundImage', '')}
+          previewMode="image"
+        />
+
+        {/* Background Music */}
+        <MediaUpload
+          label="Background Music"
+          description="Add music that plays on your event page"
+          value={customization.audioUrl}
+          accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4"
+          uploadType="audio"
+          onUploaded={(url) => onUpdate('audioUrl', url)}
+          onRemove={() => onUpdate('audioUrl', '')}
+          previewMode="audio"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Reusable upload component for media fields ──────────────────────────
+
+interface MediaUploadProps {
+  label: string;
+  description: string;
+  value: string;
+  accept: string;
+  uploadType: 'image' | 'audio';
+  onUploaded: (url: string) => void;
+  onRemove: () => void;
+  previewMode: 'image' | 'audio';
+}
+
+function MediaUpload({
+  label,
+  description,
+  value,
+  accept,
+  uploadType,
+  onUploaded,
+  onRemove,
+  previewMode,
+}: MediaUploadProps) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFile = useCallback(
+    async (file: File) => {
+      setUploading(true);
+      setError(null);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const url = uploadType === 'audio' ? '/api/upload?type=audio' : '/api/upload';
+        const res = await fetch(url, { method: 'POST', body: formData });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Upload failed');
+        }
+        const data = await res.json();
+        onUploaded(data.url);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Upload failed');
+      } finally {
+        setUploading(false);
+      }
+    },
+    [uploadType, onUploaded]
+  );
+
+  return (
+    <div className="rounded-xl border border-gray-200 p-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-700">{label}</p>
+          <p className="text-xs text-gray-500">{description}</p>
+        </div>
+        {value && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-xs font-medium text-red-500 hover:text-red-700"
+          >
+            Remove
+          </button>
+        )}
+      </div>
+
+      {value ? (
+        <div className="mt-3">
+          {previewMode === 'audio' ? (
+            <audio src={value} controls className="w-full" />
+          ) : (
+            <div className="relative overflow-hidden rounded-lg border border-gray-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={value}
+                alt={label}
+                className="h-auto max-h-32 w-full object-contain"
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="relative mt-3">
+          <input
+            type="file"
+            accept={accept}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile(file);
+            }}
+            className="absolute inset-0 cursor-pointer opacity-0"
+            disabled={uploading}
+          />
+          <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 text-center hover:border-indigo-300 hover:bg-indigo-50/30">
+            {uploading ? (
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+                <span className="text-sm text-gray-600">Uploading...</span>
+              </div>
+            ) : (
+              <span className="text-sm text-gray-500">Click to upload</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <p className="mt-2 text-xs text-red-600">{error}</p>
+      )}
     </div>
   );
 }

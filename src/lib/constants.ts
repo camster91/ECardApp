@@ -77,12 +77,30 @@ export const DEFAULT_RSVP_FIELDS = [
   },
   {
     field_name: "headcount",
-    field_label: "Number of Guests",
+    field_label: "Total Guests (including yourself)",
     field_type: "number" as const,
     placeholder: "1",
     is_required: false,
     is_enabled: true,
     sort_order: 2,
+  },
+  {
+    field_name: "adult_count",
+    field_label: "Number of Adults",
+    field_type: "number" as const,
+    placeholder: "0",
+    is_required: false,
+    is_enabled: false,
+    sort_order: 3,
+  },
+  {
+    field_name: "child_count",
+    field_label: "Number of Children",
+    field_type: "number" as const,
+    placeholder: "0",
+    is_required: false,
+    is_enabled: false,
+    sort_order: 4,
   },
   {
     field_name: "meal_choice",
@@ -91,7 +109,7 @@ export const DEFAULT_RSVP_FIELDS = [
     options: ["No preference", "Vegetarian", "Vegan", "Gluten-free", "Halal", "Kosher"],
     is_required: false,
     is_enabled: false,
-    sort_order: 3,
+    sort_order: 5,
   },
   {
     field_name: "dietary",
@@ -100,7 +118,7 @@ export const DEFAULT_RSVP_FIELDS = [
     placeholder: "Any allergies or dietary needs?",
     is_required: false,
     is_enabled: false,
-    sort_order: 4,
+    sort_order: 6,
   },
   {
     field_name: "plus_one",
@@ -109,7 +127,7 @@ export const DEFAULT_RSVP_FIELDS = [
     placeholder: "Enter names of your guests (one per line)",
     is_required: false,
     is_enabled: false,
-    sort_order: 5,
+    sort_order: 7,
   },
   {
     field_name: "message",
@@ -118,7 +136,7 @@ export const DEFAULT_RSVP_FIELDS = [
     placeholder: "Leave a message for the host...",
     is_required: false,
     is_enabled: false,
-    sort_order: 6,
+    sort_order: 8,
   },
 ];
 
@@ -129,6 +147,8 @@ export const DEFAULT_CUSTOMIZATION = {
   fontFamily: "Inter",
   buttonStyle: "rounded" as "rounded" | "pill" | "square",
   showCountdown: true,
+  audioUrl: null as string | null,
+  logoUrl: null as string | null,
 };
 
 export const FAQ_ITEMS = [

@@ -9,9 +9,9 @@ export default function SignupPage() {
   return (
     <>
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold">Create your account</h1>
+        <h1 className="text-2xl font-bold">Get started</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Start creating beautiful digital invitations
+          Enter your email to create your account
         </p>
       </div>
       <SignupForm />

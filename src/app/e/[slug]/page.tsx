@@ -7,6 +7,7 @@ import { LocationMap } from "@/components/public-event/LocationMap";
 import { CommentsSection } from "@/components/public-event/CommentsSection";
 import { SignupBoard } from "@/components/public-event/SignupBoard";
 import { ConfettiEffect } from "@/components/public-event/ConfettiEffect";
+import { AudioPlayer } from "@/components/public-event/AudioPlayer";
 import { isValidHexColor } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -95,11 +96,24 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
     ? event.customization.primaryColor
     : "#7c3aed";
 
+  const fontFamily = event.customization?.fontFamily || "Inter";
+  const backgroundImage = event.customization?.backgroundImage || null;
+  const audioUrl = event.customization?.audioUrl || null;
+  const buttonStyle = (event.customization?.buttonStyle as "rounded" | "pill" | "square") || "rounded";
+
+  const pageStyle: React.CSSProperties = {
+    backgroundColor: safeBgColor,
+    fontFamily,
+    ...(backgroundImage && {
+      backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundAttachment: "fixed",
+    }),
+  };
+
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: safeBgColor }}
-    >
+    <div className="min-h-screen" style={pageStyle}>
       <ConfettiEffect />
 
       {/* Hero — full width */}
@@ -137,6 +151,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 eventSlug={slug}
                 fields={rsvpFields || []}
                 primaryColor={safePrimaryColor}
+                buttonStyle={buttonStyle}
                 allowPlusOnes={event.allow_plus_ones !== undefined ? event.allow_plus_ones : true}
                 maxGuestsPerRsvp={event.max_guests_per_rsvp || 10}
                 spotsRemaining={spotsRemaining}
@@ -160,6 +175,9 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
           </p>
         </div>
       )}
+
+      {/* Audio player */}
+      {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
     </div>
   );
 }

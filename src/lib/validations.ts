@@ -2,19 +2,11 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export const signupSchema = z
-  .object({
-    email: z.string().email("Please enter a valid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+export const signupSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -38,7 +30,7 @@ export const eventCreateSchema = z.object({
   allow_plus_ones: z.boolean().optional(),
   max_guests_per_rsvp: z.number().int().min(1).max(50).optional(),
   design_url: z.string().optional(),
-  design_type: z.enum(["image", "pdf", "upload"]).default("upload"),
+  design_type: z.enum(["image", "pdf", "upload", "video"]).default("upload"),
   customization: z
     .object({
       primaryColor: z.string().default("#7c3aed"),
@@ -47,6 +39,8 @@ export const eventCreateSchema = z.object({
       fontFamily: z.string().default("Inter"),
       buttonStyle: z.enum(["rounded", "pill", "square"]).default("rounded"),
       showCountdown: z.boolean().default(true),
+      audioUrl: z.string().nullable().default(null),
+      logoUrl: z.string().nullable().default(null),
     })
     .optional(),
   status: z.enum(["draft", "published"]).default("draft"),
@@ -111,7 +105,6 @@ export const rsvpSubmissionSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
-export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type EventCreateInput = z.infer<typeof eventCreateSchema>;
 export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
 export type GuestInput = z.infer<typeof guestSchema>;

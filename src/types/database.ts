@@ -23,6 +23,8 @@ export interface EventCustomization {
   fontFamily: string;
   buttonStyle: "rounded" | "pill" | "square";
   showCountdown: boolean;
+  audioUrl: string | null;
+  logoUrl: string | null;
 }
 
 export interface Event {

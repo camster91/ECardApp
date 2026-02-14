@@ -1,65 +1,150 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginInput } from "@/lib/validations";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import Link from "next/link";
 import { isValidRelativePath } from "@/lib/utils";
 
 export function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [step, setStep] = useState<"email" | "code">("email");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get("redirect") || "/dashboard";
   const redirect = isValidRelativePath(rawRedirect) ? rawRedirect : "/dashboard";
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
-  });
-
-  async function onSubmit(data: LoginInput) {
+  async function handleSendCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
     setError(null);
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
+    setLoading(true);
 
-    if (authError) {
-      setError(authError.message);
-      return;
+    try {
+      const supabase = createClient();
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/callback?next=${encodeURIComponent(redirect)}`,
+        },
+      });
+
+      if (otpError) {
+        setError(otpError.message);
+        return;
+      }
+
+      setStep("code");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    router.push(redirect);
-    router.refresh();
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!otpCode.trim()) return;
+    setError(null);
+    setLoading(true);
+
+    try {
+      const supabase = createClient();
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: otpCode.trim(),
+        type: "email",
+      });
+
+      if (verifyError) {
+        setError(verifyError.message);
+        return;
+      }
+
+      router.push(redirect);
+      router.refresh();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (step === "code") {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 text-center">
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
+            <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-indigo-700">Check your email</p>
+          <p className="mt-1 text-xs text-indigo-600">
+            We sent a login link and code to <strong>{email}</strong>
+          </p>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Click the magic link in your email, or enter the 6-digit code below:
+        </p>
+
+        <form onSubmit={handleVerifyCode} className="space-y-4">
+          <Input
+            id="otp-code"
+            label="Verification Code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="Enter 6-digit code"
+            value={otpCode}
+            onChange={(e) => setOtpCode(e.target.value)}
+            maxLength={6}
+          />
+
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-accent-red">
+              {error}
+            </div>
+          )}
+
+          <Button type="submit" loading={loading} className="w-full">
+            Verify Code
+          </Button>
+        </form>
+
+        <div className="flex items-center justify-between text-sm">
+          <button
+            type="button"
+            onClick={() => { setStep("email"); setError(null); setOtpCode(""); }}
+            className="text-brand-600 hover:text-brand-700"
+          >
+            Use a different email
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSendCode({ preventDefault: () => {} } as React.FormEvent)}
+            disabled={loading}
+            className="text-brand-600 hover:text-brand-700"
+          >
+            Resend code
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSendCode} className="space-y-4">
       <Input
         id="email"
         label="Email"
         type="email"
         placeholder="you@example.com"
-        error={errors.email?.message}
-        {...register("email")}
-      />
-      <Input
-        id="password"
-        label="Password"
-        type="password"
-        placeholder="Enter your password"
-        error={errors.password?.message}
-        {...register("password")}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        autoComplete="email"
       />
 
       {error && (
@@ -68,21 +153,13 @@ export function LoginForm() {
         </div>
       )}
 
-      <Button type="submit" loading={isSubmitting} className="w-full">
-        Sign in
+      <Button type="submit" loading={loading} className="w-full">
+        Send Login Link
       </Button>
 
-      <div className="flex items-center justify-between text-sm">
-        <Link
-          href="/forgot-password"
-          className="text-brand-600 hover:text-brand-700"
-        >
-          Forgot password?
-        </Link>
-        <Link href="/signup" className="text-brand-600 hover:text-brand-700">
-          Create account
-        </Link>
-      </div>
+      <p className="text-center text-xs text-muted-foreground">
+        No password needed. We&apos;ll email you a magic link to sign in.
+      </p>
     </form>
   );
 }

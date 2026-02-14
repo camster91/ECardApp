@@ -13,6 +13,7 @@ interface RSVPFormProps {
   eventSlug: string;
   fields: RSVPField[];
   primaryColor: string;
+  buttonStyle?: "rounded" | "pill" | "square";
   allowPlusOnes?: boolean;
   maxGuestsPerRsvp?: number;
   spotsRemaining?: number | null;
@@ -21,7 +22,7 @@ interface RSVPFormProps {
   inviteGuestEmail?: string | null;
 }
 
-export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true, maxGuestsPerRsvp = 10, spotsRemaining = null, inviteGuestId, inviteGuestName, inviteGuestEmail }: RSVPFormProps) {
+export function RSVPForm({ eventSlug, fields, primaryColor, buttonStyle = "rounded", allowPlusOnes = true, maxGuestsPerRsvp = 10, spotsRemaining = null, inviteGuestId, inviteGuestName, inviteGuestEmail }: RSVPFormProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -192,22 +193,25 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
                   {field.is_required && " *"}
                 </label>
                 <div className="flex gap-2">
-                  {["attending", "not_attending", "maybe"].map((opt) => (
+                  {["attending", "not_attending", "maybe"].map((opt) => {
+                    const btnRadius = buttonStyle === "pill" ? "9999px" : buttonStyle === "square" ? "0px" : "8px";
+                    return (
                     <button
                       key={opt}
                       type="button"
                       onClick={() => updateField(field.field_name, opt)}
                       className={cn(
-                        "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                        "flex-1 border px-3 py-2 text-sm font-medium transition-colors",
                         formData[field.field_name] === opt
                           ? "text-white"
                           : "border-neutral-200 bg-white hover:bg-neutral-50"
                       )}
-                      style={
-                        formData[field.field_name] === opt
+                      style={{
+                        borderRadius: btnRadius,
+                        ...(formData[field.field_name] === opt
                           ? { backgroundColor: primaryColor, borderColor: primaryColor }
-                          : undefined
-                      }
+                          : {}),
+                      }}
                     >
                       {opt === "attending"
                         ? "Attending"
@@ -215,7 +219,8 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
                           ? "Not Attending"
                           : "Maybe"}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -329,7 +334,10 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
         type="submit"
         loading={submitting}
         className="w-full"
-        style={{ backgroundColor: primaryColor }}
+        style={{
+          backgroundColor: primaryColor,
+          borderRadius: buttonStyle === "pill" ? "9999px" : buttonStyle === "square" ? "0px" : "8px",
+        }}
       >
         Submit RSVP
       </Button>

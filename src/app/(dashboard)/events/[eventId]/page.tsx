@@ -6,6 +6,7 @@ import { DeleteEventButton } from '@/components/dashboard/DeleteEventButton';
 import { CopyLinkButton } from '@/components/dashboard/CopyLinkButton';
 import { UpgradeButton } from '@/components/events/UpgradeButton';
 import { UpgradeSuccessToast } from '@/components/events/UpgradeSuccessToast';
+import { ExportTools } from '@/components/dashboard/ExportTools';
 import { TIERS } from '@/lib/constants';
 
 interface EventDetailPageProps {
@@ -226,6 +227,18 @@ export default async function EventDetailPage({ params, searchParams }: EventDet
               </div>
             )}
           </div>
+        </div>
+
+        {/* Marketing Tools */}
+        <div className="mt-6">
+          <ExportTools
+            eventId={eventId}
+            eventTitle={event.title}
+            eventDate={event.event_date}
+            eventLocation={event.location_name}
+            eventSlug={event.slug}
+            designUrl={event.design_url}
+          />
         </div>
 
         {/* Announcements */}

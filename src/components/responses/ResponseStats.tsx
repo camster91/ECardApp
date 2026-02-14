@@ -11,9 +11,18 @@ export function ResponseStats({ responses }: ResponseStatsProps) {
   const attending = responses.filter((r) => r.status === "attending").length;
   const notAttending = responses.filter((r) => r.status === "not_attending").length;
   const maybe = responses.filter((r) => r.status === "maybe").length;
-  const totalHeadcount = responses
-    .filter((r) => r.status === "attending")
-    .reduce((sum, r) => sum + r.headcount, 0);
+  const attendingResponses = responses.filter((r) => r.status === "attending");
+  const totalHeadcount = attendingResponses.reduce((sum, r) => sum + r.headcount, 0);
+
+  const totalAdults = attendingResponses.reduce(
+    (sum, r) => sum + (parseInt(String(r.response_data?.adult_count ?? "0"), 10) || 0),
+    0
+  );
+  const totalChildren = attendingResponses.reduce(
+    (sum, r) => sum + (parseInt(String(r.response_data?.child_count ?? "0"), 10) || 0),
+    0
+  );
+  const hasAgeCounts = totalAdults > 0 || totalChildren > 0;
 
   const stats = [
     { label: "Total Responses", value: total, color: "bg-brand-500" },
@@ -51,6 +60,11 @@ export function ResponseStats({ responses }: ResponseStatsProps) {
         <div className="col-span-2 rounded-lg border border-border bg-white p-4">
           <p className="text-sm text-muted-foreground">Total Headcount (Attending)</p>
           <p className="mt-1 text-2xl font-bold">{totalHeadcount}</p>
+          {hasAgeCounts && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Adults: {totalAdults} &middot; Children: {totalChildren}
+            </p>
+          )}
         </div>
       </div>
 
