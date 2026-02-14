@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { EventCard } from "@/components/dashboard/EventCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
-import { Button } from "@/components/ui/Button";
-import { CalendarPlus, Calendar, Users, BarChart3 } from "lucide-react";
+import { CalendarPlus, Calendar, Users, BarChart3, Sparkles } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -55,39 +54,51 @@ export default async function DashboardPage() {
     0
   );
 
+  const greeting = getGreeting();
+  const userName = user.email?.split("@")[0] || "there";
+
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      {/* Welcome header */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your events and track RSVPs
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            {greeting}, {userName}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {totalEvents === 0
+              ? "Ready to create your first event?"
+              : `You have ${totalEvents} event${totalEvents !== 1 ? "s" : ""} and ${totalResponses} response${totalResponses !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <Link href="/events/new">
-          <Button>
-            <CalendarPlus className="mr-2 h-4 w-4" />
-            Create Event
-          </Button>
+        <Link
+          href="/events/new"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-brand-500/25 transition-all hover:shadow-lg hover:shadow-brand-500/30 active:scale-[0.98] sm:py-2.5"
+        >
+          <Sparkles className="h-4 w-4" />
+          Create Event
         </Link>
       </div>
 
       {totalEvents > 0 && (
-        <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid gap-4 sm:grid-cols-3">
           <StatsCard
             title="Total Events"
             value={totalEvents}
             icon={<Calendar className="h-5 w-5" />}
+            color="purple"
           />
           <StatsCard
             title="Published"
             value={publishedEvents}
             icon={<BarChart3 className="h-5 w-5" />}
+            color="green"
           />
           <StatsCard
             title="Total Responses"
             value={totalResponses}
             icon={<Users className="h-5 w-5" />}
+            color="blue"
           />
         </div>
       )}
@@ -95,16 +106,26 @@ export default async function DashboardPage() {
       {totalEvents === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-3">
-          {events?.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              responseCount={responseCounts[event.id] ?? 0}
-            />
-          ))}
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Your Events</h2>
+          <div className="space-y-4">
+            {events?.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                responseCount={responseCounts[event.id] ?? 0}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }
