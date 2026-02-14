@@ -1,5 +1,5 @@
 export type EventStatus = "draft" | "published" | "archived";
-export type EventTier = "free" | "pro30" | "pass";
+export type EventTier = "free" | "standard" | "premium";
 export type RSVPFieldType =
   | "attendance"
   | "text"

@@ -64,12 +64,20 @@ export async function POST(
     // Verify ownership
     const { data: event } = await adminSupabase
       .from("events")
-      .select("id")
+      .select("id, tier")
       .eq("id", eventId)
       .eq("user_id", user.id)
       .single();
 
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Tier gate: tags require standard or premium
+    if (event.tier === "free") {
+      return NextResponse.json(
+        { error: "Guest tags require a Standard or Premium upgrade" },
+        { status: 403 }
+      );
+    }
 
     const parsed = tagSchema.safeParse(body);
     if (!parsed.success) {

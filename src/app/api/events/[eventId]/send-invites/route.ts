@@ -35,7 +35,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     // Ownership + status check
     const { data: event, error: eventError } = await adminSupabase
       .from("events")
-      .select("id, title, event_date, location_name, slug, status, design_url, host_name, dress_code, rsvp_deadline")
+      .select("id, title, event_date, location_name, slug, status, design_url, host_name, dress_code, rsvp_deadline, tier")
       .eq("id", eventId)
       .eq("user_id", user.id)
       .single();
@@ -73,7 +73,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
     const resend = getResendClient();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const smsEnabled = isTwilioConfigured();
+    // SMS requires standard or premium tier
+    const smsEnabled = isTwilioConfigured() && event.tier !== "free";
 
     // Process all guests in parallel (batches of 10 to avoid overwhelming APIs)
     const BATCH_SIZE = 10;

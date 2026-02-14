@@ -1,101 +1,58 @@
 export const TIERS = {
   free: {
-    name: "Create FREE",
-    tagline: "Start free",
+    name: "Free",
+    tagline: "Get started",
     description:
-      "Get started\u2014manage invites for free and upgrade as needed.",
+      "Everything you need to create and send invites\u2014free forever.",
     price: 0,
     maxResponses: 15,
     replyLabel: "15 replies",
+    stripePriceId: null,
     features: [
-      {
-        title: "Create FREE",
-        description: "All eCards start as Create FREE.",
-      },
-      {
-        title: "15 replies",
-        description: "Manage up to 15 guest replies for free.",
-      },
-      {
-        title: "Your eCard will always collect all replies",
-        description:
-          "Your eCard will always collect all replies, even on Create FREE. You can upgrade anytime to access full guest details if you receive more than 15 replies.",
-      },
-      {
-        title: "All essentials to design, send, and manage invites",
-        description:
-          "Everything you need to create, send, and manage your event invites.",
-      },
+      { title: "15 guest replies", description: null },
+      { title: "Unlimited events", description: null },
+      { title: "Design, send & manage invites", description: null },
+      { title: "Email invitations", description: null },
+      { title: "ECardApp branding shown", description: null },
     ],
   },
-  pro30: {
-    name: "Create PRO30",
-    tagline: "Small events",
-    description: "Perfect for small gatherings\u2014manage up to 30 guest replies.",
-    price: 19,
-    maxResponses: 30,
-    replyLabel: "16-30 replies",
-    features: [
-      {
-        title: "30 replies",
-        description: "Manage up to 30 guest replies.",
-      },
-      {
-        title: "Remove branding",
-        description:
-          "Send invites without ECardApp branding for a personalized look.",
-      },
-      {
-        title: "Location & calendar links",
-        description: "Share event location and calendar links with guests.",
-      },
-      {
-        title: "Guest Tags",
-        description:
-          "Categorize guests for dietary needs, lodging, table assignments, and more. Tags are private to the host and included in exports.",
-      },
-      {
-        title: "Guest list management",
-        description:
-          "Edit, add, or delete guests easily from your dashboard.",
-      },
-    ],
-  },
-  pass: {
-    name: "Create PASS",
-    tagline: "Large events",
+  standard: {
+    name: "Standard",
+    tagline: "Most popular",
     description:
-      "Ideal for your medium or large event at one simple price.",
-    price: 34,
-    maxResponses: 1200,
-    replyLabel: "All replies*",
-    badge: "Best value!",
+      "More replies, guest tags, SMS invites, and no branding.",
+    price: 5,
+    maxResponses: 50,
+    replyLabel: "50 replies",
+    stripePriceId: process.env.STRIPE_STANDARD_PRICE_ID ?? null,
+    badge: "Most popular",
     features: [
-      {
-        title: "Unlimited replies*",
-        description: "Manage all your guest replies for one event.",
-      },
-      {
-        title: "Remove branding",
-        description:
-          "Send invites without ECardApp branding for a personalized look.",
-      },
-      {
-        title: "Location & calendar links",
-        description: "Share event location and calendar links with guests.",
-      },
-      {
-        title: "Guest Tags",
-        description:
-          "Categorize guests for dietary needs, lodging, table assignments, and more. Tags are private to the host and included in exports.",
-      },
-      {
-        title: "Guest list management",
-        description:
-          "Edit, add, or delete guests easily from your dashboard.",
-      },
+      { title: "50 guest replies", description: null },
+      { title: "Remove ECardApp branding", description: null },
+      { title: "Guest tags", description: null },
+      { title: "SMS invites", description: null },
+      { title: "Announcements", description: null },
     ],
-    footnote: "*Subject to our fair use policy of 1200 guest replies.",
+  },
+  premium: {
+    name: "Premium",
+    tagline: "Full power",
+    description:
+      "Unlimited replies, sign-up board, and priority support.",
+    price: 10,
+    maxResponses: 1200,
+    replyLabel: "Unlimited replies*",
+    stripePriceId: process.env.STRIPE_PREMIUM_PRICE_ID ?? null,
+    badge: "Best value",
+    features: [
+      { title: "Unlimited replies*", description: null },
+      { title: "Remove ECardApp branding", description: null },
+      { title: "Guest tags & SMS invites", description: null },
+      { title: "Announcements", description: null },
+      { title: "Sign-up board", description: null },
+      { title: "Priority support", description: null },
+    ],
+    footnote: "*Subject to our fair use policy of 1,200 guest replies.",
   },
 } as const;
 
@@ -176,19 +133,19 @@ export const DEFAULT_CUSTOMIZATION = {
 
 export const FAQ_ITEMS = [
   {
-    question: "What is included in the Create FREE plan?",
+    question: "What is included in the Free plan?",
     answer:
-      "The Create FREE plan includes all essential features to design, send, and manage your event invites. You can manage up to 15 guest replies per event at no cost. Your eCard will always collect all replies, even on the free plan.",
+      "The Free plan includes all essential features to design, send, and manage your event invites. You can manage up to 15 guest replies per event at no cost. Your eCard will always collect all replies, even on the Free plan.",
   },
   {
-    question: "What happens if I need more than 30 replies for an event?",
+    question: "How does per-event pricing work?",
     answer:
-      "If you need more than 30 replies, you can upgrade to Create PASS which supports unlimited replies (up to 1200 per our fair use policy). You can upgrade at any time, even after you've sent out your invites.",
+      "Each event starts on the Free tier. When you need more features or replies, you can upgrade that specific event to Standard ($5) or Premium ($10). The upgrade is a one-time payment per event\u2014no subscriptions.",
   },
   {
-    question: "Can I upgrade from Create FREE to Create PRO later?",
+    question: "Can I upgrade an event after it\u2019s been created?",
     answer:
-      "Yes! You can upgrade your event at any time. All your existing data, responses, and settings will be preserved when you upgrade.",
+      "Yes! You can upgrade your event at any time from the event dashboard. All your existing data, responses, and settings will be preserved when you upgrade.",
   },
   {
     question: "Will I be charged in my local currency?",
@@ -201,19 +158,19 @@ export const FAQ_ITEMS = [
       "A reply is counted each time a unique guest submits an RSVP response through your event page. Each guest submission counts as one reply, regardless of headcount.",
   },
   {
-    question: "Can I downgrade or cancel my upgrade if my plans change?",
+    question: "Can I downgrade or get a refund?",
     answer:
-      "Event upgrades are one-time purchases per event and are non-refundable. However, you can always create new events on the free plan.",
+      "Event upgrades are one-time purchases per event and are non-refundable. However, you can always create new events on the Free plan.",
   },
   {
-    question: "How do I upgrade my event to a PRO plan?",
+    question: "What features are unlocked with Standard?",
     answer:
-      "From your event dashboard, click the 'Upgrade' button next to your event. Choose your preferred plan and complete the payment to instantly unlock additional features.",
+      "Standard ($5/event) gives you 50 replies, removes ECardApp branding, and unlocks guest tags, SMS invites, and announcements.",
   },
   {
-    question: "Can I use ECardApp for business events and promotions?",
+    question: "What extra features does Premium include?",
     answer:
-      "Absolutely! ECardApp is great for corporate events, webinars, product launches, grand openings, and more. The PRO and PASS plans offer branding removal for a professional look.",
+      "Premium ($10/event) includes everything in Standard plus unlimited replies (up to 1,200 fair use), a sign-up board for coordinating contributions, and priority support.",
   },
 ];
 

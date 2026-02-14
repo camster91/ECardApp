@@ -4,13 +4,18 @@ import { createClient } from '@/lib/supabase/server';
 import { AnnouncementSection } from '@/components/dashboard/AnnouncementSection';
 import { DeleteEventButton } from '@/components/dashboard/DeleteEventButton';
 import { CopyLinkButton } from '@/components/dashboard/CopyLinkButton';
+import { UpgradeButton } from '@/components/events/UpgradeButton';
+import { UpgradeSuccessToast } from '@/components/events/UpgradeSuccessToast';
+import { TIERS } from '@/lib/constants';
 
 interface EventDetailPageProps {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ upgraded?: string }>;
 }
 
-export default async function EventDetailPage({ params }: EventDetailPageProps) {
+export default async function EventDetailPage({ params, searchParams }: EventDetailPageProps) {
   const { eventId } = await params;
+  const { upgraded } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -119,6 +124,20 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </div>
           )}
 
+          {/* Tier + Upgrade */}
+          <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-4 py-3">
+            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+              event.tier === 'premium'
+                ? 'bg-amber-100 text-amber-700'
+                : event.tier === 'standard'
+                  ? 'bg-brand-100 text-brand-700'
+                  : 'bg-gray-100 text-gray-600'
+            }`}>
+              {TIERS[event.tier as keyof typeof TIERS]?.name ?? 'Free'} tier
+            </span>
+            <UpgradeButton eventId={eventId} currentTier={event.tier} />
+          </div>
+
           {/* Quick actions */}
           <div className="grid grid-cols-2 gap-2 border-t border-gray-100 p-4 sm:flex sm:gap-2">
             <ActionLink href={`/events/${eventId}/edit`} icon="edit" label="Edit" />
@@ -215,6 +234,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             <AnnouncementSection eventId={eventId} />
           </div>
         )}
+
+        {upgraded === 'true' && <UpgradeSuccessToast />}
       </div>
     </div>
   );

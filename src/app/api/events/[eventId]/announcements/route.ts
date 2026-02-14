@@ -74,7 +74,7 @@ export async function POST(
     // Ownership + status check
     const { data: event, error: eventError } = await adminSupabase
       .from("events")
-      .select("id, title, slug, status")
+      .select("id, title, slug, status, tier")
       .eq("id", eventId)
       .eq("user_id", user.id)
       .single();
@@ -87,6 +87,14 @@ export async function POST(
       return NextResponse.json(
         { error: "Event must be published before sending announcements" },
         { status: 400 }
+      );
+    }
+
+    // Tier gate: announcements require standard or premium
+    if (event.tier === "free") {
+      return NextResponse.json(
+        { error: "Announcements require a Standard or Premium upgrade" },
+        { status: 403 }
       );
     }
 

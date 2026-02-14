@@ -55,12 +55,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { data: event } = await admin
       .from("events")
-      .select("id")
+      .select("id, tier")
       .eq("id", eventId)
       .eq("user_id", user.id)
       .single();
 
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Tier gate: sign-up board requires premium
+    if (event.tier !== "premium") {
+      return NextResponse.json(
+        { error: "Sign-up board requires a Premium upgrade" },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const parsed = signupItemSchema.safeParse(body);
