@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import type { WizardFormData } from './WizardContainer';
+import AIPromptGenerator from './AIPromptGenerator';
 
 interface StepDesignUploadProps {
   designUrl: string;
@@ -116,6 +117,9 @@ export default function StepDesignUpload({
           <li>Export as <strong>PNG or JPG</strong>, max 10MB</li>
         </ul>
       </div>
+
+      {/* AI Prompt Generator */}
+      <AIPromptGenerator />
 
       {/* Design type selector */}
       <div className="flex gap-3">

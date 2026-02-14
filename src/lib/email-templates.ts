@@ -6,6 +6,7 @@ interface InvitationEmailParams {
   eventDate: string | null;
   locationName: string | null;
   rsvpUrl: string;
+  designUrl?: string | null;
   hostName?: string;
 }
 
@@ -13,7 +14,7 @@ export function buildInvitationEmail(params: InvitationEmailParams): {
   subject: string;
   html: string;
 } {
-  const { guestName, eventTitle, eventDate, locationName, rsvpUrl } = params;
+  const { guestName, eventTitle, eventDate, locationName, rsvpUrl, designUrl } = params;
 
   const safeGuestName = escapeHtml(guestName);
   const safeEventTitle = escapeHtml(eventTitle);
@@ -35,6 +36,26 @@ export function buildInvitationEmail(params: InvitationEmailParams): {
       </tr>`
     : "";
 
+  const designBlock = designUrl
+    ? `<!-- Design Image -->
+          <tr>
+            <td style="padding:0;">
+              <a href="${rsvpUrl}" style="display:block;">
+                <img src="${escapeHtml(designUrl)}" alt="${safeEventTitle}" style="display:block;width:100%;height:auto;border:0;" />
+              </a>
+            </td>
+          </tr>`
+    : "";
+
+  const headerBlock = designUrl
+    ? ""
+    : `<!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 24px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;">You're Invited!</h1>
+            </td>
+          </tr>`;
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
@@ -43,12 +64,8 @@ export function buildInvitationEmail(params: InvitationEmailParams): {
     <tr>
       <td align="center">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-          <!-- Header -->
-          <tr>
-            <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 24px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;">You're Invited!</h1>
-            </td>
-          </tr>
+          ${designBlock}
+          ${headerBlock}
           <!-- Body -->
           <tr>
             <td style="padding:24px;">
