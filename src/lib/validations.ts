@@ -106,6 +106,7 @@ export const rsvpSubmissionSchema = z.object({
   status: z.enum(["attending", "not_attending", "maybe"]),
   headcount: z.number().min(1).max(50).default(1),
   response_data: z.record(z.string(), z.unknown()).default({}),
+  guest_id: z.string().uuid().optional(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

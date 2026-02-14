@@ -44,7 +44,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     // Fetch guests that have been invited but not reminded
     const { data: guests, error: guestsError } = await adminSupabase
       .from("guests")
-      .select("id, name, email, invite_status, reminder_sent_at")
+      .select("id, name, email, invite_status, invite_token, reminder_sent_at")
       .eq("event_id", eventId)
       .eq("invite_status", "sent")
       .not("email", "is", null)
@@ -60,13 +60,16 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
     const resend = getResendClient();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const rsvpUrl = `${siteUrl}/e/${event.slug}`;
 
     let sent = 0;
     let failed = 0;
 
     for (const guest of guests) {
       if (!guest.email) continue;
+
+      const rsvpUrl = guest.invite_token
+        ? `${siteUrl}/e/${event.slug}?t=${guest.invite_token}`
+        : `${siteUrl}/e/${event.slug}`;
 
       const { subject, html } = buildReminderEmail({
         guestName: guest.name,

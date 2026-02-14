@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient } from "@/lib/resend";
 import { buildInvitationEmail } from "@/lib/email-templates";
+import { generateInviteToken } from "@/lib/utils";
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
@@ -45,7 +46,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     // Fetch guests that need invitations
     const { data: guests, error: guestsError } = await adminSupabase
       .from("guests")
-      .select("id, name, email, invite_status")
+      .select("id, name, email, invite_status, invite_token")
       .eq("event_id", eventId)
       .not("email", "is", null)
       .in("invite_status", ["not_sent", "failed"]);
@@ -63,13 +64,24 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
     const resend = getResendClient();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const rsvpUrl = `${siteUrl}/e/${event.slug}`;
 
     let sent = 0;
     let failed = 0;
 
     for (const guest of guests) {
       if (!guest.email) continue;
+
+      // Generate invite token if guest doesn't have one
+      let token = guest.invite_token;
+      if (!token) {
+        token = generateInviteToken();
+        await adminSupabase
+          .from("guests")
+          .update({ invite_token: token })
+          .eq("id", guest.id);
+      }
+
+      const rsvpUrl = `${siteUrl}/e/${event.slug}?t=${token}`;
 
       const { subject, html } = buildInvitationEmail({
         guestName: guest.name,

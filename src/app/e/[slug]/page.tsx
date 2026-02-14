@@ -12,6 +12,7 @@ import type { Metadata } from "next";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -37,8 +38,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PublicEventPage({ params }: Props) {
+export default async function PublicEventPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
   const supabase = createAdminClient();
 
   const { data: event } = await supabase
@@ -71,6 +73,19 @@ export default async function PublicEventPage({ params }: Props) {
       0
     );
     spotsRemaining = Math.max(0, maxAttendees - currentTotal);
+  }
+
+  // Resolve invite token for magic link pre-filling
+  let inviteGuest: { id: string; name: string; email: string | null } | null = null;
+  const token = typeof resolvedSearchParams.t === "string" ? resolvedSearchParams.t : null;
+  if (token) {
+    const { data: guest } = await supabase
+      .from("guests")
+      .select("id, name, email")
+      .eq("invite_token", token)
+      .eq("event_id", event.id)
+      .single();
+    if (guest) inviteGuest = guest;
   }
 
   const safeBgColor = isValidHexColor(event.customization?.backgroundColor ?? "")
@@ -125,6 +140,9 @@ export default async function PublicEventPage({ params }: Props) {
                 allowPlusOnes={event.allow_plus_ones !== undefined ? event.allow_plus_ones : true}
                 maxGuestsPerRsvp={event.max_guests_per_rsvp || 10}
                 spotsRemaining={spotsRemaining}
+                inviteGuestId={inviteGuest?.id}
+                inviteGuestName={inviteGuest?.name}
+                inviteGuestEmail={inviteGuest?.email}
               />
             </div>
           </div>

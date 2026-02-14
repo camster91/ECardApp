@@ -53,6 +53,10 @@ export function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
+export function generateInviteToken(): string {
+  return nanoid(24);
+}
+
 export function isValidHexColor(color: string): boolean {
   return /^#[0-9A-Fa-f]{3,8}$/.test(color);
 }

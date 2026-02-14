@@ -50,7 +50,7 @@ export async function POST(
       );
     }
 
-    let { respondent_name, respondent_email, status, headcount, response_data } =
+    let { respondent_name, respondent_email, status, headcount, response_data, guest_id } =
       parsed.data;
 
     // Enforce +1 restrictions (default: allow)
@@ -105,6 +105,7 @@ export async function POST(
         status,
         headcount,
         response_data,
+        ...(guest_id && { guest_id }),
       })
       .select()
       .single();

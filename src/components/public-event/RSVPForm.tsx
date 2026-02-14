@@ -16,37 +16,51 @@ interface RSVPFormProps {
   allowPlusOnes?: boolean;
   maxGuestsPerRsvp?: number;
   spotsRemaining?: number | null;
+  inviteGuestId?: string;
+  inviteGuestName?: string;
+  inviteGuestEmail?: string | null;
 }
 
-export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true, maxGuestsPerRsvp = 10, spotsRemaining = null }: RSVPFormProps) {
+export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true, maxGuestsPerRsvp = 10, spotsRemaining = null, inviteGuestId, inviteGuestName, inviteGuestEmail }: RSVPFormProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-fill name and email if user is signed in
+  // Pre-fill from invite link (magic link) or signed-in user
   useEffect(() => {
-    async function prefill() {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const name = user.user_metadata?.full_name
-            || user.user_metadata?.name
-            || user.email?.split("@")[0]
-            || "";
-          if (name && !formData["respondent_name"]) {
-            setFormData((prev) => ({ ...prev, respondent_name: name }));
-          }
-          if (user.email && !formData["email"]) {
-            setFormData((prev) => ({ ...prev, email: user.email || "" }));
-          }
-        }
-      } catch {
-        // Not signed in, that's fine
-      }
+    // Invite data takes priority
+    if (inviteGuestName) {
+      setFormData((prev) => ({ ...prev, respondent_name: inviteGuestName }));
     }
-    prefill();
+    if (inviteGuestEmail) {
+      setFormData((prev) => ({ ...prev, email: inviteGuestEmail }));
+    }
+
+    // Fall back to auth session if no invite data
+    if (!inviteGuestName) {
+      async function prefill() {
+        try {
+          const supabase = createClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const name = user.user_metadata?.full_name
+              || user.user_metadata?.name
+              || user.email?.split("@")[0]
+              || "";
+            if (name) {
+              setFormData((prev) => ({ ...prev, respondent_name: prev.respondent_name || name }));
+            }
+            if (user.email) {
+              setFormData((prev) => ({ ...prev, email: prev.email || user.email || "" }));
+            }
+          }
+        } catch {
+          // Not signed in, that's fine
+        }
+      }
+      prefill();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -91,6 +105,7 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
           status,
           headcount: parseInt(formData["headcount"] || "1", 10) || 1,
           response_data: responseData,
+          ...(inviteGuestId && { guest_id: inviteGuestId }),
         }),
       });
 
@@ -143,6 +158,14 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
           </span>
         )}
       </div>
+
+      {inviteGuestName && (
+        <div className="rounded-lg bg-indigo-50 border border-indigo-100 px-4 py-2.5">
+          <p className="text-sm text-indigo-700">
+            Welcome, <strong>{inviteGuestName}</strong>! Your details have been pre-filled.
+          </p>
+        </div>
+      )}
 
       {/* Always show name field */}
       <Input

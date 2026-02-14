@@ -76,6 +76,7 @@ export interface Guest {
   email: string | null;
   phone: string | null;
   notes: string | null;
+  invite_token: string | null;
   invite_status: InviteStatus;
   invite_sent_at: string | null;
   reminder_sent_at: string | null;
