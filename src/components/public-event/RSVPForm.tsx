@@ -29,6 +29,8 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
 
   // Pre-fill from invite link (magic link) or signed-in user
   useEffect(() => {
+    let cancelled = false;
+
     // Invite data takes priority
     if (inviteGuestName) {
       setFormData((prev) => ({ ...prev, respondent_name: inviteGuestName }));
@@ -43,17 +45,16 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
         try {
           const supabase = createClient();
           const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const name = user.user_metadata?.full_name
-              || user.user_metadata?.name
-              || user.email?.split("@")[0]
-              || "";
-            if (name) {
-              setFormData((prev) => ({ ...prev, respondent_name: prev.respondent_name || name }));
-            }
-            if (user.email) {
-              setFormData((prev) => ({ ...prev, email: prev.email || user.email || "" }));
-            }
+          if (cancelled || !user) return;
+          const name = user.user_metadata?.full_name
+            || user.user_metadata?.name
+            || user.email?.split("@")[0]
+            || "";
+          if (name) {
+            setFormData((prev) => ({ ...prev, respondent_name: prev.respondent_name || name }));
+          }
+          if (user.email) {
+            setFormData((prev) => ({ ...prev, email: prev.email || user.email || "" }));
           }
         } catch {
           // Not signed in, that's fine
@@ -61,6 +62,8 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
       }
       prefill();
     }
+
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -317,7 +320,7 @@ export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true
       })}
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-accent-red">
+        <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-accent-red">
           {error}
         </div>
       )}

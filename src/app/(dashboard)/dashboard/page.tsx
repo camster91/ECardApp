@@ -21,29 +21,15 @@ export default async function DashboardPage() {
 
   const { data: events } = await supabase
     .from("events")
-    .select("*")
+    .select("*, rsvp_responses(count)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  // Get response counts for all events
-  const eventIds = (events ?? []).map((e) => e.id);
-  let responseCounts: Record<string, number> = {};
-
-  if (eventIds.length > 0) {
-    const { data: responses } = await supabase
-      .from("rsvp_responses")
-      .select("event_id")
-      .in("event_id", eventIds);
-
-    if (responses) {
-      responseCounts = responses.reduce(
-        (acc, r) => {
-          acc[r.event_id] = (acc[r.event_id] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>
-      );
-    }
+  // Extract response counts from the joined query
+  const responseCounts: Record<string, number> = {};
+  for (const event of events ?? []) {
+    const countArr = (event as Record<string, unknown>).rsvp_responses as { count: number }[] | undefined;
+    responseCounts[event.id] = countArr?.[0]?.count ?? 0;
   }
 
   const totalEvents = events?.length ?? 0;

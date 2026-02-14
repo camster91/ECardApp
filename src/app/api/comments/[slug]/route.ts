@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { commentSchema } from "@/lib/validations";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 type RouteParams = { params: Promise<{ slug: string }> };
 
@@ -47,6 +48,12 @@ export async function POST(
   { params }: RouteParams
 ) {
   try {
+    const ip = getClientIp(request);
+    const { success } = rateLimit(`comment:${ip}`, { max: 15, windowSeconds: 600 });
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
+
     const { slug } = await params;
     const body = await request.json();
     const adminSupabase = createAdminClient();

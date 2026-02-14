@@ -1,5 +1,10 @@
 import { formatDateTime } from "@/lib/utils";
 
+/** Strip characters that could be used for SMS injection (e.g. GSM concatenation exploits) */
+function sanitize(text: string): string {
+  return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").slice(0, 300);
+}
+
 interface InviteSmsParams {
   guestName: string;
   eventTitle: string;
@@ -10,7 +15,9 @@ interface InviteSmsParams {
 }
 
 export function buildInviteSms(params: InviteSmsParams): string {
-  const { guestName, eventTitle, eventDate, locationName, hostName, rsvpUrl } = params;
+  const guestName = sanitize(params.guestName);
+  const eventTitle = sanitize(params.eventTitle);
+  const { eventDate, locationName, hostName, rsvpUrl } = params;
 
   const lines: string[] = [];
   lines.push(`Hi ${guestName}! You're invited to ${eventTitle}.`);
@@ -19,10 +26,10 @@ export function buildInviteSms(params: InviteSmsParams): string {
     lines.push(`When: ${formatDateTime(eventDate)}`);
   }
   if (locationName) {
-    lines.push(`Where: ${locationName}`);
+    lines.push(`Where: ${sanitize(locationName)}`);
   }
   if (hostName) {
-    lines.push(`Host: ${hostName}`);
+    lines.push(`Host: ${sanitize(hostName)}`);
   }
 
   lines.push(`\nRSVP here: ${rsvpUrl}`);
@@ -39,7 +46,9 @@ interface ReminderSmsParams {
 }
 
 export function buildReminderSms(params: ReminderSmsParams): string {
-  const { guestName, eventTitle, eventDate, rsvpUrl } = params;
+  const guestName = sanitize(params.guestName);
+  const eventTitle = sanitize(params.eventTitle);
+  const { eventDate, rsvpUrl } = params;
 
   const lines: string[] = [];
   lines.push(`Hi ${guestName}, reminder about ${eventTitle}!`);
@@ -62,7 +71,10 @@ interface AnnouncementSmsParams {
 }
 
 export function buildAnnouncementSms(params: AnnouncementSmsParams): string {
-  const { guestName, eventTitle, subject, rsvpUrl } = params;
+  const guestName = sanitize(params.guestName);
+  const eventTitle = sanitize(params.eventTitle);
+  const subject = sanitize(params.subject);
+  const { rsvpUrl } = params;
 
   return `Hi ${guestName}, update for ${eventTitle}: ${subject}\n\nDetails: ${rsvpUrl}\n\n- Sent via ECardApp`;
 }

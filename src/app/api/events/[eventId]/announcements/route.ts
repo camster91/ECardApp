@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimit } from "@/lib/rate-limit";
 import { getResendClient } from "@/lib/resend";
 import { buildAnnouncementEmail } from "@/lib/email-templates";
 import { buildAnnouncementSms } from "@/lib/sms-templates";
@@ -63,6 +64,11 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { success: rateLimitOk } = rateLimit(`announcements:${user.id}`, { max: 5, windowSeconds: 3600 });
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: "Too many send requests. Please wait before sending again." }, { status: 429 });
+    }
+
     const adminSupabase = createAdminClient();
 
     // Ownership + status check
@@ -106,58 +112,67 @@ export async function POST(
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const smsEnabled = isTwilioConfigured();
 
+    const BATCH_SIZE = 10;
     let sentCount = 0;
 
-    for (const guest of guests || []) {
-      if (!guest.email && !guest.phone) continue;
+    const allGuests = (guests || []).filter((g) => g.email || g.phone);
 
-      const rsvpUrl = guest.invite_token
-        ? `${siteUrl}/e/${event.slug}?t=${guest.invite_token}`
-        : `${siteUrl}/e/${event.slug}`;
+    for (let i = 0; i < allGuests.length; i += BATCH_SIZE) {
+      const batch = allGuests.slice(i, i + BATCH_SIZE);
 
-      // Send email
-      if (guest.email) {
-        const { subject, html } = buildAnnouncementEmail({
-          guestName: guest.name,
-          eventTitle: event.title,
-          announcementSubject: parsed.data.subject,
-          announcementMessage: parsed.data.message,
-          rsvpUrl,
-        });
+      const results = await Promise.allSettled(
+        batch.map(async (guest) => {
+          const rsvpUrl = guest.invite_token
+            ? `${siteUrl}/e/${event.slug}?t=${guest.invite_token}`
+            : `${siteUrl}/e/${event.slug}`;
 
-        try {
-          await resend.emails.send({
-            from: "ECardApp <onboarding@resend.dev>",
-            to: guest.email,
-            subject,
-            html,
-          });
-          sentCount++;
-        } catch {
-          // Continue sending to other guests
-        }
-      }
+          let ok = false;
 
-      // Send SMS
-      if (guest.phone && smsEnabled) {
-        const smsBody = buildAnnouncementSms({
-          guestName: guest.name,
-          eventTitle: event.title,
-          subject: parsed.data.subject,
-          rsvpUrl,
-        });
+          if (guest.email) {
+            const { subject, html } = buildAnnouncementEmail({
+              guestName: guest.name,
+              eventTitle: event.title,
+              announcementSubject: parsed.data.subject,
+              announcementMessage: parsed.data.message,
+              rsvpUrl,
+            });
 
-        try {
-          const twilioClient = getTwilioClient();
-          await twilioClient.messages.create({
-            body: smsBody,
-            to: guest.phone,
-            ...getTwilioSendOptions(),
-          });
-          sentCount++;
-        } catch {
-          // Continue sending to other guests
-        }
+            try {
+              await resend.emails.send({
+                from: "ECardApp <onboarding@resend.dev>",
+                to: guest.email,
+                subject,
+                html,
+              });
+              ok = true;
+            } catch {}
+          }
+
+          if (guest.phone && smsEnabled) {
+            const smsBody = buildAnnouncementSms({
+              guestName: guest.name,
+              eventTitle: event.title,
+              subject: parsed.data.subject,
+              rsvpUrl,
+            });
+
+            try {
+              const twilioClient = getTwilioClient();
+              await twilioClient.messages.create({
+                body: smsBody,
+                to: guest.phone,
+                ...getTwilioSendOptions(),
+              });
+              ok = true;
+            } catch {}
+          }
+
+          return ok;
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value) sentCount++;
       }
     }
 

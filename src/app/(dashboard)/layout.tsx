@@ -1,5 +1,3 @@
-"use client";
-
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
@@ -18,7 +16,7 @@ export default function DashboardLayout({
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardHeader />
-        <main className="flex-1 overflow-y-auto bg-neutral-50 p-4 pb-20 sm:p-6 md:pb-6">
+        <main id="main-content" className="flex-1 overflow-y-auto bg-neutral-50 p-4 pb-20 sm:p-6 md:pb-6">
           {children}
         </main>
       </div>

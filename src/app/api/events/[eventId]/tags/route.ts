@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { z } from "zod";
+
+const tagSchema = z.object({
+  tag_name: z.string().min(1).max(50).trim(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().default("#7c3aed"),
+});
+
+const deleteTagSchema = z.object({
+  tagId: z.string().uuid(),
+});
 
 export async function GET(
   _request: Request,
@@ -61,12 +71,17 @@ export async function POST(
 
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    const parsed = tagSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid data", details: parsed.error.flatten() }, { status: 400 });
+    }
+
     const { data: tag, error } = await adminSupabase
       .from("guest_tags")
       .insert({
         event_id: eventId,
-        tag_name: body.tag_name,
-        color: body.color || "#7c3aed",
+        tag_name: parsed.data.tag_name,
+        color: parsed.data.color,
       })
       .select()
       .single();
@@ -102,10 +117,15 @@ export async function DELETE(
 
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    const parsed = deleteTagSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid tag ID" }, { status: 400 });
+    }
+
     const { error } = await adminSupabase
       .from("guest_tags")
       .delete()
-      .eq("id", body.tagId)
+      .eq("id", parsed.data.tagId)
       .eq("event_id", eventId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 type RouteParams = { params: Promise<{ slug: string }> };
 
@@ -40,6 +41,12 @@ export async function GET(_request: Request, { params }: RouteParams) {
 // POST — claim a signup item
 export async function POST(request: Request, { params }: RouteParams) {
   try {
+    const ip = getClientIp(request);
+    const { success } = rateLimit(`signup:${ip}`, { max: 20, windowSeconds: 600 });
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
+
     const { slug } = await params;
     const body = await request.json();
     const supabase = createAdminClient();

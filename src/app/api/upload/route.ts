@@ -47,15 +47,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Convert File to ArrayBuffer then to Buffer for upload
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Validate magic bytes to prevent spoofed content types
+    const header = buffer.slice(0, 8);
+    const magicValid =
+      (file.type === 'image/jpeg' && header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) ||
+      (file.type === 'image/png' && header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) ||
+      (file.type === 'image/gif' && header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46) ||
+      (file.type === 'image/webp' && header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) ||
+      (file.type === 'image/svg+xml');
+
+    if (!magicValid) {
+      return NextResponse.json(
+        { error: 'File content does not match declared type' },
+        { status: 400 }
+      );
+    }
+
     // Extract file extension
     const originalName = file.name;
     const ext = originalName.split('.').pop() || 'png';
     const fileName = `${nanoid()}.${ext}`;
     const filePath = `${user.id}/${fileName}`;
-
-    // Convert File to ArrayBuffer then to Buffer for upload
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
     // Use admin client for storage (bypasses RLS; auth is checked above)
     const adminSupabase = createAdminClient();

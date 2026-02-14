@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { randomBytes } from "crypto";
 import { nanoid } from "nanoid";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -54,7 +55,7 @@ export function escapeHtml(text: string): string {
 }
 
 export function generateInviteToken(): string {
-  return nanoid(24);
+  return randomBytes(18).toString("base64url");
 }
 
 export function isValidHexColor(color: string): boolean {

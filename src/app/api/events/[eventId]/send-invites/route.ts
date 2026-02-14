@@ -6,6 +6,7 @@ import { buildInvitationEmail } from "@/lib/email-templates";
 import { buildInviteSms } from "@/lib/sms-templates";
 import { generateInviteToken } from "@/lib/utils";
 import { isTwilioConfigured, getTwilioClient, getTwilioSendOptions } from "@/lib/twilio";
+import { rateLimit } from "@/lib/rate-limit";
 
 type RouteParams = { params: Promise<{ eventId: string }> };
 
@@ -14,7 +15,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     const { eventId } = await params;
     const supabase = await createClient();
 
-    // Auth check
+    // Auth check first, then rate limit by user
     const {
       data: { user },
       error: authError,
@@ -22,6 +23,11 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { success: rateLimitOk } = rateLimit(`send-invites:${user.id}`, { max: 5, windowSeconds: 3600 });
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: "Too many send requests. Please wait before sending again." }, { status: 429 });
     }
 
     const adminSupabase = createAdminClient();
@@ -69,95 +75,119 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const smsEnabled = isTwilioConfigured();
 
+    // Process all guests in parallel (batches of 10 to avoid overwhelming APIs)
+    const BATCH_SIZE = 10;
     let sent = 0;
     let failed = 0;
     let smsSent = 0;
     let smsFailed = 0;
+    const successIds: string[] = [];
+    const failedIds: string[] = [];
 
-    for (const guest of sendableGuests) {
-      // Generate invite token if guest doesn't have one
-      let token = guest.invite_token;
-      if (!token) {
-        token = generateInviteToken();
-        await adminSupabase
-          .from("guests")
-          .update({ invite_token: token })
-          .eq("id", guest.id);
-      }
+    for (let i = 0; i < sendableGuests.length; i += BATCH_SIZE) {
+      const batch = sendableGuests.slice(i, i + BATCH_SIZE);
 
-      const rsvpUrl = `${siteUrl}/e/${event.slug}?t=${token}`;
-      let emailOk = false;
-      let smsOk = false;
+      const results = await Promise.allSettled(
+        batch.map(async (guest) => {
+          // Generate invite token if guest doesn't have one
+          let token = guest.invite_token;
+          if (!token) {
+            token = generateInviteToken();
+            await adminSupabase
+              .from("guests")
+              .update({ invite_token: token })
+              .eq("id", guest.id);
+          }
 
-      // Send email if guest has email
-      if (guest.email) {
-        const { subject, html } = buildInvitationEmail({
-          guestName: guest.name,
-          eventTitle: event.title,
-          eventDate: event.event_date,
-          locationName: event.location_name,
-          designUrl: event.design_url,
-          hostName: event.host_name || undefined,
-          dressCode: event.dress_code,
-          rsvpDeadline: event.rsvp_deadline,
-          rsvpUrl,
-        });
+          const rsvpUrl = `${siteUrl}/e/${event.slug}?t=${token}`;
+          let emailOk = false;
+          let smsOk = false;
 
-        try {
-          await resend.emails.send({
-            from: "ECardApp <onboarding@resend.dev>",
-            to: guest.email,
-            subject,
-            html,
-          });
-          emailOk = true;
-          sent++;
-        } catch {
-          failed++;
+          // Send email if guest has email
+          if (guest.email) {
+            const { subject, html } = buildInvitationEmail({
+              guestName: guest.name,
+              eventTitle: event.title,
+              eventDate: event.event_date,
+              locationName: event.location_name,
+              designUrl: event.design_url,
+              hostName: event.host_name || undefined,
+              dressCode: event.dress_code,
+              rsvpDeadline: event.rsvp_deadline,
+              rsvpUrl,
+            });
+
+            try {
+              await resend.emails.send({
+                from: "ECardApp <onboarding@resend.dev>",
+                to: guest.email,
+                subject,
+                html,
+              });
+              emailOk = true;
+            } catch {
+              // email failed
+            }
+          }
+
+          // Send SMS if guest has phone and Twilio is configured
+          if (guest.phone && smsEnabled) {
+            const smsBody = buildInviteSms({
+              guestName: guest.name,
+              eventTitle: event.title,
+              eventDate: event.event_date,
+              locationName: event.location_name,
+              hostName: event.host_name || undefined,
+              rsvpUrl,
+            });
+
+            try {
+              const twilioClient = getTwilioClient();
+              await twilioClient.messages.create({
+                body: smsBody,
+                to: guest.phone,
+                ...getTwilioSendOptions(),
+              });
+              smsOk = true;
+            } catch {
+              // sms failed
+            }
+          }
+
+          return { guestId: guest.id, emailOk, smsOk };
+        })
+      );
+
+      // Aggregate results
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          const { guestId, emailOk, smsOk } = result.value;
+          if (emailOk) sent++;
+          else if (batch.find((g) => g.id === guestId)?.email) failed++;
+          if (smsOk) smsSent++;
+          else if (smsEnabled && batch.find((g) => g.id === guestId)?.phone) smsFailed++;
+
+          if (emailOk || smsOk) {
+            successIds.push(guestId);
+          } else {
+            failedIds.push(guestId);
+          }
         }
       }
+    }
 
-      // Send SMS if guest has phone and Twilio is configured
-      if (guest.phone && smsEnabled) {
-        const smsBody = buildInviteSms({
-          guestName: guest.name,
-          eventTitle: event.title,
-          eventDate: event.event_date,
-          locationName: event.location_name,
-          hostName: event.host_name || undefined,
-          rsvpUrl,
-        });
-
-        try {
-          const twilioClient = getTwilioClient();
-          await twilioClient.messages.create({
-            body: smsBody,
-            to: guest.phone,
-            ...getTwilioSendOptions(),
-          });
-          smsOk = true;
-          smsSent++;
-        } catch {
-          smsFailed++;
-        }
-      }
-
-      // Update invite status if either channel succeeded
-      if (emailOk || smsOk) {
-        await adminSupabase
-          .from("guests")
-          .update({
-            invite_status: "sent",
-            invite_sent_at: new Date().toISOString(),
-          })
-          .eq("id", guest.id);
-      } else if (guest.email || (guest.phone && smsEnabled)) {
-        // Only mark as failed if we actually tried to send
-        await adminSupabase
-          .from("guests")
-          .update({ invite_status: "failed" })
-          .eq("id", guest.id);
-      }
+    // Batch update statuses
+    if (successIds.length > 0) {
+      await adminSupabase
+        .from("guests")
+        .update({ invite_status: "sent", invite_sent_at: new Date().toISOString() })
+        .in("id", successIds);
+    }
+    if (failedIds.length > 0) {
+      await adminSupabase
+        .from("guests")
+        .update({ invite_status: "failed" })
+        .in("id", failedIds);
     }
 
     return NextResponse.json({ sent, failed, sms_sent: smsSent, sms_failed: smsFailed });

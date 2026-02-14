@@ -73,7 +73,8 @@ export function GuestTable({ guests, eventId, onEdit, onRefresh }: GuestTablePro
               e.stopPropagation();
               onEdit(item as Guest);
             }}
-            className="rounded-lg p-1.5 hover:bg-neutral-100"
+            aria-label={`Edit ${item.name}`}
+            className="rounded-lg p-2 hover:bg-neutral-100"
           >
             <Edit2 className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -83,7 +84,8 @@ export function GuestTable({ guests, eventId, onEdit, onRefresh }: GuestTablePro
               handleDelete(item.id);
             }}
             disabled={deleting === item.id}
-            className="rounded-lg p-1.5 hover:bg-red-50"
+            aria-label={`Delete ${item.name}`}
+            className="rounded-lg p-2 hover:bg-red-50"
           >
             <Trash2 className="h-4 w-4 text-accent-red" />
           </button>
