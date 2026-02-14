@@ -15,12 +15,27 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ecard.ashbi.ca"),
   title: {
-    default: "ECardApp - Create & Send Digital Invitations",
+    default:
+      "ECardApp — Beautiful Digital Invitations & RSVP Management",
     template: "%s | ECardApp",
   },
   description:
-    "Create beautiful digital invitations, collect RSVPs, and manage your event guests all in one place.",
+    "Create beautiful digital invitations, collect RSVPs instantly, and manage your event — all in one place. No stamps, no stress.",
+  keywords: [
+    "digital invitations",
+    "eCard",
+    "RSVP",
+    "online invitations",
+    "event management",
+    "digital wedding invitations",
+    "baby shower invitations",
+    "birthday invitations",
+    "corporate event invitations",
+    "RSVP management",
+    "free digital invitations",
+  ],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

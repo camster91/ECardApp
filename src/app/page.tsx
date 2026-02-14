@@ -1,29 +1,67 @@
-import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import Hero from "@/components/marketing/Hero";
+import TrustBar from "@/components/marketing/TrustBar";
+import HowItWorks from "@/components/marketing/HowItWorks";
+import UseCaseHighlights from "@/components/marketing/UseCaseHighlights";
 import FeaturesGrid from "@/components/marketing/FeaturesGrid";
 import Testimonials from "@/components/marketing/Testimonials";
 import PricingCards from "@/components/marketing/PricingCards";
+import PricingFAQ from "@/components/marketing/PricingFAQ";
 import CTASection from "@/components/marketing/CTASection";
+import { JsonLd } from "@/components/marketing/JsonLd";
+import { createMetadata, SITE_URL, SITE_NAME } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "CreateCards.io - Beautiful Digital Invitations",
-};
+export const metadata = createMetadata({
+  title: "ECardApp — Beautiful Digital Invitations & RSVP Management",
+  path: "",
+  keywords: [
+    "digital invitations",
+    "eCard",
+    "online invitations",
+    "RSVP management",
+    "free digital invitations",
+  ],
+});
 
 export default function HomePage() {
   return (
     <>
+      <JsonLd
+        data={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: SITE_NAME,
+            url: SITE_URL,
+            logo: `${SITE_URL}/icons/icon.svg`,
+            description:
+              "Create beautiful digital invitations, collect RSVPs instantly, and manage your event — all in one place.",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: SITE_NAME,
+            url: SITE_URL,
+            applicationCategory: "LifestyleApplication",
+            operatingSystem: "Web",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+            },
+          },
+        ]}
+      />
+
       <Navbar />
 
       <main>
-        {/* Hero */}
         <Hero />
-
-        {/* Features */}
+        <TrustBar />
+        <HowItWorks />
+        <UseCaseHighlights />
         <FeaturesGrid />
-
-        {/* Testimonials */}
         <Testimonials />
 
         {/* Pricing preview */}
@@ -39,7 +77,7 @@ export default function HomePage() {
           <PricingCards />
         </section>
 
-        {/* CTA */}
+        <PricingFAQ />
         <CTASection />
       </main>
 
