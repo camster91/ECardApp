@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { DEFAULT_RSVP_FIELDS } from '@/lib/constants';
 import StepDesignUpload from './StepDesignUpload';
 import StepEventDetails from './StepEventDetails';
+import StepGuests from './StepGuests';
 import StepCustomize from './StepCustomize';
 import StepRSVPFields from './StepRSVPFields';
 import StepPreview from './StepPreview';
@@ -31,6 +32,11 @@ export interface EventCustomization {
   showCountdown: boolean;
 }
 
+export interface RegistryLinkEntry {
+  label: string;
+  url: string;
+}
+
 export interface WizardFormData {
   title: string;
   description: string;
@@ -41,16 +47,19 @@ export interface WizardFormData {
   host_name: string;
   dress_code: string;
   rsvp_deadline: string;
+  registry_links: RegistryLinkEntry[];
   design_url: string;
   design_type: string;
   customization: EventCustomization;
   rsvp_fields: RSVPField[];
+  guests: { name: string; email: string }[];
 }
 
 type WizardAction =
   | { type: 'UPDATE_FIELD'; field: keyof WizardFormData; value: unknown }
   | { type: 'UPDATE_CUSTOMIZATION'; field: keyof EventCustomization; value: unknown }
   | { type: 'SET_RSVP_FIELDS'; fields: RSVPField[] }
+  | { type: 'SET_GUESTS'; guests: { name: string; email: string }[] }
   | { type: 'LOAD_DATA'; data: Partial<WizardFormData> };
 
 interface WizardContainerProps {
@@ -64,9 +73,10 @@ interface WizardContainerProps {
 const STEPS = [
   { number: 1, label: 'Details' },
   { number: 2, label: 'Design' },
-  { number: 3, label: 'Customize' },
-  { number: 4, label: 'RSVP Fields' },
-  { number: 5, label: 'Preview' },
+  { number: 3, label: 'Guests' },
+  { number: 4, label: 'Customize' },
+  { number: 5, label: 'RSVP Fields' },
+  { number: 6, label: 'Preview' },
 ] as const;
 
 // ── Default form state ─────────────────────────────────────────────────
@@ -92,6 +102,7 @@ function getInitialState(initialData?: Partial<WizardFormData>): WizardFormData 
     host_name: '',
     dress_code: '',
     rsvp_deadline: '',
+    registry_links: [],
     design_url: '',
     design_type: 'upload',
     customization: {
@@ -103,6 +114,7 @@ function getInitialState(initialData?: Partial<WizardFormData>): WizardFormData 
       showCountdown: true,
     },
     rsvp_fields: defaultRsvpFields,
+    guests: [],
     ...initialData,
   };
 }
@@ -125,6 +137,9 @@ function wizardReducer(state: WizardFormData, action: WizardAction): WizardFormD
 
     case 'SET_RSVP_FIELDS':
       return { ...state, rsvp_fields: action.fields };
+
+    case 'SET_GUESTS':
+      return { ...state, guests: action.guests };
 
     case 'LOAD_DATA':
       return { ...state, ...action.data };
@@ -165,8 +180,12 @@ export default function WizardContainer({
     dispatch({ type: 'SET_RSVP_FIELDS', fields });
   }, []);
 
+  const setGuests = useCallback((guests: { name: string; email: string }[]) => {
+    dispatch({ type: 'SET_GUESTS', guests });
+  }, []);
+
   const goNext = useCallback(() => {
-    setCurrentStep((prev) => Math.min(prev + 1, 5));
+    setCurrentStep((prev) => Math.min(prev + 1, 6));
   }, []);
 
   const goBack = useCallback(() => {
@@ -188,6 +207,7 @@ export default function WizardContainer({
         host_name: formData.host_name || undefined,
         dress_code: formData.dress_code || undefined,
         rsvp_deadline: formData.rsvp_deadline || undefined,
+        registry_links: formData.registry_links.length > 0 ? formData.registry_links : undefined,
         design_url: formData.design_url || undefined,
         design_type: formData.design_type || 'upload',
         customization: formData.customization,
@@ -238,6 +258,20 @@ export default function WizardContainer({
         });
       }
 
+      // Bulk-create guests if any were added during wizard
+      if (formData.guests.length > 0) {
+        await fetch(`/api/events/${eventResponse.id}/guests/bulk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            formData.guests.map((g) => ({
+              name: g.name,
+              email: g.email || undefined,
+            }))
+          ),
+        });
+      }
+
       router.push(`/events/${eventResponse.id}`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Something went wrong');
@@ -264,6 +298,7 @@ export default function WizardContainer({
               dress_code: formData.dress_code,
               rsvp_deadline: formData.rsvp_deadline,
             }}
+            registryLinks={formData.registry_links}
             onUpdate={updateField}
           />
         );
@@ -288,19 +323,26 @@ export default function WizardContainer({
         );
       case 3:
         return (
+          <StepGuests
+            guests={formData.guests}
+            onUpdate={setGuests}
+          />
+        );
+      case 4:
+        return (
           <StepCustomize
             customization={formData.customization}
             onUpdate={updateCustomization}
           />
         );
-      case 4:
+      case 5:
         return (
           <StepRSVPFields
             fields={formData.rsvp_fields}
             onUpdate={setRsvpFields}
           />
         );
-      case 5:
+      case 6:
         return (
           <StepPreview
             formData={formData}
@@ -351,7 +393,7 @@ export default function WizardContainer({
                     {step.label}
                   </span>
                 </div>
-                {step.number < 5 && (
+                {step.number < 6 && (
                   <div
                     className={cn(
                       'h-0.5 w-full -mt-4',
@@ -378,7 +420,7 @@ export default function WizardContainer({
       </div>
 
       {/* ── Navigation buttons ──────────────────────────────────────── */}
-      {currentStep < 5 && (
+      {currentStep < 6 && (
         <div className="mt-6 flex items-center justify-between">
           <button
             type="button"

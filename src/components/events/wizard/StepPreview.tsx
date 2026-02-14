@@ -64,10 +64,11 @@ export default function StepPreview({ formData, onSubmit, isSubmitting }: StepPr
           {/* Design image */}
           {formData.design_url && (
             <div className="mb-6 overflow-hidden rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={formData.design_url}
                 alt="Event design"
-                className="h-auto max-h-[300px] w-full object-cover"
+                className="h-auto w-full object-contain"
               />
             </div>
           )}

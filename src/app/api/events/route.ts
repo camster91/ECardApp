@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, description, event_date, event_end_date, location_name, location_address, host_name, dress_code, rsvp_deadline, design_url, design_type, customization, status } = parsed.data;
+    const { title, description, event_date, event_end_date, location_name, location_address, host_name, dress_code, rsvp_deadline, registry_links, design_url, design_type, customization, status } = parsed.data;
 
     // Use admin client for DB writes (auth verified above via getUser)
     const adminSupabase = createAdminClient();
@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
           host_name: host_name ?? null,
           dress_code: dress_code ?? null,
           rsvp_deadline: rsvp_deadline ?? null,
+          registry_links: registry_links ?? [],
           design_url: design_url ?? null,
           design_type: design_type ?? 'upload',
           customization: customization ?? {},

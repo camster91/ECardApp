@@ -11,6 +11,11 @@ export type RSVPFieldType =
 export type RSVPStatus = "attending" | "not_attending" | "maybe" | "pending";
 export type InviteStatus = "not_sent" | "sent" | "failed";
 
+export interface RegistryLink {
+  label: string;
+  url: string;
+}
+
 export interface EventCustomization {
   primaryColor: string;
   backgroundColor: string;
@@ -32,6 +37,7 @@ export interface Event {
   host_name: string | null;
   dress_code: string | null;
   rsvp_deadline: string | null;
+  registry_links: RegistryLink[];
   location_lat: number | null;
   location_lng: number | null;
   design_url: string | null;

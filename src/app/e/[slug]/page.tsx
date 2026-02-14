@@ -5,6 +5,7 @@ import { EventDetails } from "@/components/public-event/EventDetails";
 import { RSVPForm } from "@/components/public-event/RSVPForm";
 import { LocationMap } from "@/components/public-event/LocationMap";
 import { CommentsSection } from "@/components/public-event/CommentsSection";
+import { ConfettiEffect } from "@/components/public-event/ConfettiEffect";
 import { isValidHexColor } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -66,51 +67,57 @@ export default async function PublicEventPage({ params }: Props) {
       className="min-h-screen"
       style={{ backgroundColor: safeBgColor }}
     >
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* Event Design */}
+      <ConfettiEffect />
+
+      {/* Hero — full width */}
+      <div className="mx-auto max-w-4xl px-4 pt-8">
         <EventHero event={event} />
-
-        {/* Event Details */}
-        <div className="mt-8">
-          <EventDetails event={event} />
-        </div>
-
-        {/* Location Map */}
-        {event.location_address && (
-          <div className="mt-8">
-            <LocationMap
-              address={event.location_address}
-              name={event.location_name || undefined}
-            />
-          </div>
-        )}
-
-        {/* RSVP Form */}
-        <div className="mt-8 rounded-xl border border-border bg-white p-6">
-          <RSVPForm
-            eventSlug={slug}
-            fields={rsvpFields || []}
-            primaryColor={safePrimaryColor}
-          />
-        </div>
-
-        {/* Comments / Message Board */}
-        <div className="mt-8">
-          <CommentsSection eventSlug={slug} />
-        </div>
-
-        {/* Footer branding (free tier) */}
-        {event.tier === "free" && (
-          <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">
-              Powered by{" "}
-              <span className="font-semibold">
-                ECard<span className="text-brand-600">App</span>
-              </span>
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* Two-column layout on desktop */}
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+          {/* Left column: Details + Map */}
+          <div className="space-y-8 lg:col-span-3">
+            <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+              <EventDetails event={event} />
+            </div>
+
+            {event.location_address && (
+              <LocationMap
+                address={event.location_address}
+                name={event.location_name || undefined}
+              />
+            )}
+
+            {/* Comments / Message Board */}
+            <CommentsSection eventSlug={slug} />
+          </div>
+
+          {/* Right column: RSVP Form */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-8 rounded-xl border border-border bg-white p-6 shadow-sm">
+              <RSVPForm
+                eventSlug={slug}
+                fields={rsvpFields || []}
+                primaryColor={safePrimaryColor}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer branding (free tier) */}
+      {event.tier === "free" && (
+        <div className="pb-8 text-center">
+          <p className="text-xs text-muted-foreground">
+            Powered by{" "}
+            <span className="font-semibold">
+              ECard<span className="text-brand-600">App</span>
+            </span>
+          </p>
+        </div>
+      )}
     </div>
   );
 }

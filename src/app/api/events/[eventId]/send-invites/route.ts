@@ -26,7 +26,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     // Ownership + status check
     const { data: event, error: eventError } = await adminSupabase
       .from("events")
-      .select("id, title, event_date, location_name, slug, status, design_url")
+      .select("id, title, event_date, location_name, slug, status, design_url, host_name, dress_code, rsvp_deadline")
       .eq("id", eventId)
       .eq("user_id", user.id)
       .single();
@@ -77,6 +77,9 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         eventDate: event.event_date,
         locationName: event.location_name,
         designUrl: event.design_url,
+        hostName: event.host_name || undefined,
+        dressCode: event.dress_code,
+        rsvpDeadline: event.rsvp_deadline,
         rsvpUrl,
       });
 

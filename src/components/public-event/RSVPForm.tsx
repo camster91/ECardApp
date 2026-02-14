@@ -107,6 +107,7 @@ export function RSVPForm({ eventSlug, fields, primaryColor }: RSVPFormProps) {
         value={formData["respondent_name"] || ""}
         onChange={(e) => updateField("respondent_name", e.target.value)}
         required
+        autoComplete="name"
       />
 
       {enabledFields.map((field) => {
@@ -158,6 +159,7 @@ export function RSVPForm({ eventSlug, fields, primaryColor }: RSVPFormProps) {
                 value={formData[field.field_name] || ""}
                 onChange={(e) => updateField(field.field_name, e.target.value)}
                 required={field.is_required}
+                autoComplete="email"
               />
             );
           case "number":

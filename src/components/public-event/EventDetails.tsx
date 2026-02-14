@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Clock, User, Shirt, CalendarClock } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Shirt, CalendarClock, Gift, ExternalLink } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 import { AddToCalendar } from "@/components/public-event/AddToCalendar";
 import type { Event } from "@/types/database";
@@ -72,6 +72,30 @@ export function EventDetails({ event }: EventDetailsProps) {
           <CountdownDisplay eventDate={event.event_date} />
         )}
       </div>
+
+      {/* Registry Links */}
+      {event.registry_links && event.registry_links.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <Gift className="h-5 w-5 text-pink-500" />
+            Gift Registries
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {event.registry_links.map((link, index) => (
+              <a
+                key={index}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-2 text-sm font-medium text-pink-700 transition-colors hover:bg-pink-100"
+              >
+                {link.label}
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <AddToCalendar event={event} />
     </div>

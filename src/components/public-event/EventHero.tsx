@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { Event } from "@/types/database";
 import { isValidHexColor } from "@/lib/utils";
 
@@ -29,13 +28,11 @@ export function EventHero({ event }: EventHeroProps) {
 
   return (
     <div className="overflow-hidden rounded-xl">
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={event.design_url}
         alt={event.title}
-        width={800}
-        height={600}
         className="h-auto w-full object-cover"
-        priority
       />
     </div>
   );

@@ -1,8 +1,8 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { useEffect } from 'react';
-import type { WizardFormData } from './WizardContainer';
+import { useEffect, useState } from 'react';
+import type { WizardFormData, RegistryLinkEntry } from './WizardContainer';
 
 interface EventDetailsFormValues {
   title: string;
@@ -18,6 +18,7 @@ interface EventDetailsFormValues {
 
 interface StepEventDetailsProps {
   data: EventDetailsFormValues;
+  registryLinks: RegistryLinkEntry[];
   onUpdate: (field: keyof WizardFormData, value: unknown) => void;
 }
 
@@ -33,7 +34,24 @@ const DRESS_CODE_OPTIONS = [
   'Festive / Theme',
 ];
 
-export default function StepEventDetails({ data, onUpdate }: StepEventDetailsProps) {
+export default function StepEventDetails({ data, registryLinks, onUpdate }: StepEventDetailsProps) {
+  const [regLabel, setRegLabel] = useState('');
+  const [regUrl, setRegUrl] = useState('');
+  const [regError, setRegError] = useState('');
+
+  const addRegistryLink = () => {
+    if (!regLabel.trim()) { setRegError('Label is required'); return; }
+    if (!regUrl.trim()) { setRegError('URL is required'); return; }
+    try { new URL(regUrl); } catch { setRegError('Please enter a valid URL'); return; }
+    setRegError('');
+    onUpdate('registry_links', [...registryLinks, { label: regLabel.trim(), url: regUrl.trim() }]);
+    setRegLabel('');
+    setRegUrl('');
+  };
+
+  const removeRegistryLink = (index: number) => {
+    onUpdate('registry_links', registryLinks.filter((_, i) => i !== index));
+  };
   const {
     register,
     watch,
@@ -320,6 +338,77 @@ export default function StepEventDetails({ data, onUpdate }: StepEventDetailsPro
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Section: Gift Registries ────────────────────────── */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gradient-to-r from-pink-50/80 to-rose-50/40 px-5 py-3.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-pink-100 text-pink-600">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+          </div>
+          <h3 className="text-sm font-semibold text-gray-900">Gift Registries</h3>
+          {registryLinks.length > 0 && (
+            <span className="ml-auto rounded-full bg-pink-100 px-2.5 py-0.5 text-xs font-semibold text-pink-700">
+              {registryLinks.length}
+            </span>
+          )}
+        </div>
+        <div className="p-5 space-y-4">
+          <p className="text-xs text-gray-500">Add links to gift registries — they will appear on your public event page.</p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              value={regLabel}
+              onChange={(e) => setRegLabel(e.target.value)}
+              placeholder="e.g. Amazon Wishlist"
+              className="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition-all focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 placeholder:text-gray-400"
+            />
+            <input
+              type="url"
+              value={regUrl}
+              onChange={(e) => setRegUrl(e.target.value)}
+              placeholder="https://..."
+              className="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition-all focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 placeholder:text-gray-400"
+            />
+            <button
+              type="button"
+              onClick={addRegistryLink}
+              className="rounded-xl bg-pink-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-700 active:bg-pink-800"
+            >
+              Add
+            </button>
+          </div>
+          {regError && <p className="text-xs text-red-600">{regError}</p>}
+
+          {registryLinks.length > 0 && (
+            <div className="divide-y divide-gray-100 rounded-xl border border-gray-200">
+              {registryLinks.map((link, index) => (
+                <div key={index} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <svg className="h-4 w-4 shrink-0 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.886-3.497l4.5-4.5a4.5 4.5 0 016.364 6.364l-1.757 1.757" />
+                    </svg>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{link.label}</p>
+                      <p className="truncate text-xs text-gray-400">{link.url}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeRegistryLink(index)}
+                    className="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
