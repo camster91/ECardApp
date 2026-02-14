@@ -11,6 +11,9 @@ interface EventDetailsFormValues {
   event_end_date: string;
   location_name: string;
   location_address: string;
+  host_name: string;
+  dress_code: string;
+  rsvp_deadline: string;
 }
 
 interface StepEventDetailsProps {
@@ -39,6 +42,9 @@ export default function StepEventDetails({ data, onUpdate }: StepEventDetailsPro
       'event_end_date',
       'location_name',
       'location_address',
+      'host_name',
+      'dress_code',
+      'rsvp_deadline',
     ];
 
     fields.forEach((field) => {
@@ -152,6 +158,48 @@ export default function StepEventDetails({ data, onUpdate }: StepEventDetailsPro
               className="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
+        </div>
+
+        {/* Host & Dress Code */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="host_name" className="block text-sm font-medium text-gray-700">
+              Hosted By
+            </label>
+            <input
+              id="host_name"
+              type="text"
+              {...register('host_name')}
+              placeholder="e.g. Sarah & Tom"
+              className="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="dress_code" className="block text-sm font-medium text-gray-700">
+              Dress Code
+            </label>
+            <input
+              id="dress_code"
+              type="text"
+              {...register('dress_code')}
+              placeholder="e.g. Black Tie, Casual, Semi-Formal"
+              className="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
+        </div>
+
+        {/* RSVP Deadline */}
+        <div className="sm:w-1/2">
+          <label htmlFor="rsvp_deadline" className="block text-sm font-medium text-gray-700">
+            RSVP Deadline
+          </label>
+          <input
+            id="rsvp_deadline"
+            type="datetime-local"
+            {...register('rsvp_deadline')}
+            className="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+          />
         </div>
       </div>
     </div>

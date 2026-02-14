@@ -38,6 +38,9 @@ export interface WizardFormData {
   event_end_date: string;
   location_name: string;
   location_address: string;
+  host_name: string;
+  dress_code: string;
+  rsvp_deadline: string;
   design_url: string;
   design_type: string;
   customization: EventCustomization;
@@ -59,8 +62,8 @@ interface WizardContainerProps {
 // ── Steps config ───────────────────────────────────────────────────────
 
 const STEPS = [
-  { number: 1, label: 'Design' },
-  { number: 2, label: 'Details' },
+  { number: 1, label: 'Details' },
+  { number: 2, label: 'Design' },
   { number: 3, label: 'Customize' },
   { number: 4, label: 'RSVP Fields' },
   { number: 5, label: 'Preview' },
@@ -86,6 +89,9 @@ function getInitialState(initialData?: Partial<WizardFormData>): WizardFormData 
     event_end_date: '',
     location_name: '',
     location_address: '',
+    host_name: '',
+    dress_code: '',
+    rsvp_deadline: '',
     design_url: '',
     design_type: 'upload',
     customization: {
@@ -179,6 +185,9 @@ export default function WizardContainer({
         event_end_date: formData.event_end_date || undefined,
         location_name: formData.location_name || undefined,
         location_address: formData.location_address || undefined,
+        host_name: formData.host_name || undefined,
+        dress_code: formData.dress_code || undefined,
+        rsvp_deadline: formData.rsvp_deadline || undefined,
         design_url: formData.design_url || undefined,
         design_type: formData.design_type || 'upload',
         customization: formData.customization,
@@ -243,14 +252,6 @@ export default function WizardContainer({
     switch (currentStep) {
       case 1:
         return (
-          <StepDesignUpload
-            designUrl={formData.design_url}
-            designType={formData.design_type}
-            onUpdate={updateField}
-          />
-        );
-      case 2:
-        return (
           <StepEventDetails
             data={{
               title: formData.title,
@@ -259,8 +260,30 @@ export default function WizardContainer({
               event_end_date: formData.event_end_date,
               location_name: formData.location_name,
               location_address: formData.location_address,
+              host_name: formData.host_name,
+              dress_code: formData.dress_code,
+              rsvp_deadline: formData.rsvp_deadline,
             }}
             onUpdate={updateField}
+          />
+        );
+      case 2:
+        return (
+          <StepDesignUpload
+            designUrl={formData.design_url}
+            designType={formData.design_type}
+            onUpdate={updateField}
+            eventDetails={{
+              title: formData.title,
+              description: formData.description,
+              event_date: formData.event_date,
+              event_end_date: formData.event_end_date,
+              location_name: formData.location_name,
+              location_address: formData.location_address,
+              host_name: formData.host_name,
+              dress_code: formData.dress_code,
+              rsvp_deadline: formData.rsvp_deadline,
+            }}
           />
         );
       case 3:
@@ -374,10 +397,10 @@ export default function WizardContainer({
           <button
             type="button"
             onClick={goNext}
-            disabled={currentStep === 2 && !formData.title.trim()}
+            disabled={currentStep === 1 && !formData.title.trim()}
             className={cn(
               'rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-700',
-              currentStep === 2 && !formData.title.trim() && 'cursor-not-allowed opacity-50'
+              currentStep === 1 && !formData.title.trim() && 'cursor-not-allowed opacity-50'
             )}
           >
             Next

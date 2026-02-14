@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Shirt, CalendarClock } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 import { AddToCalendar } from "@/components/public-event/AddToCalendar";
 import type { Event } from "@/types/database";
@@ -44,6 +44,27 @@ export function EventDetails({ event }: EventDetailsProps) {
                 </p>
               )}
             </div>
+          </div>
+        )}
+
+        {event.host_name && (
+          <div className="flex items-center gap-3 text-sm">
+            <User className="h-5 w-5 text-brand-600" />
+            <p className="font-medium">Hosted by {event.host_name}</p>
+          </div>
+        )}
+
+        {event.dress_code && (
+          <div className="flex items-center gap-3 text-sm">
+            <Shirt className="h-5 w-5 text-brand-600" />
+            <p className="font-medium">Dress code: {event.dress_code}</p>
+          </div>
+        )}
+
+        {event.rsvp_deadline && (
+          <div className="flex items-center gap-3 text-sm">
+            <CalendarClock className="h-5 w-5 text-brand-600" />
+            <p className="font-medium">RSVP by {formatDateTime(event.rsvp_deadline)}</p>
           </div>
         )}
 

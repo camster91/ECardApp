@@ -29,6 +29,9 @@ export interface Event {
   event_end_date: string | null;
   location_name: string | null;
   location_address: string | null;
+  host_name: string | null;
+  dress_code: string | null;
+  rsvp_deadline: string | null;
   location_lat: number | null;
   location_lng: number | null;
   design_url: string | null;

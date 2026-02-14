@@ -158,6 +158,24 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                   )}
                 </dd>
               </div>
+              {event.host_name && (
+                <div>
+                  <dt className="text-xs font-medium text-gray-500">Hosted By</dt>
+                  <dd className="mt-0.5 text-sm text-gray-900">{event.host_name}</dd>
+                </div>
+              )}
+              {event.dress_code && (
+                <div>
+                  <dt className="text-xs font-medium text-gray-500">Dress Code</dt>
+                  <dd className="mt-0.5 text-sm text-gray-900">{event.dress_code}</dd>
+                </div>
+              )}
+              {event.rsvp_deadline && (
+                <div>
+                  <dt className="text-xs font-medium text-gray-500">RSVP Deadline</dt>
+                  <dd className="mt-0.5 text-sm text-gray-900">{formatDate(event.rsvp_deadline)}</dd>
+                </div>
+              )}
               <div>
                 <dt className="text-xs font-medium text-gray-500">Slug</dt>
                 <dd className="mt-0.5 text-sm font-mono text-gray-900">{event.slug}</dd>

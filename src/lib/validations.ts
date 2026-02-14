@@ -27,6 +27,9 @@ export const eventCreateSchema = z.object({
   event_end_date: z.string().optional(),
   location_name: z.string().max(200).optional(),
   location_address: z.string().max(500).optional(),
+  host_name: z.string().max(200).optional(),
+  dress_code: z.string().max(100).optional(),
+  rsvp_deadline: z.string().optional(),
   design_url: z.string().optional(),
   design_type: z.enum(["image", "pdf", "upload"]).default("upload"),
   customization: z

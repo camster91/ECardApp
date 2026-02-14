@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import type { EventDetailsForPrompt } from './StepDesignUpload';
 
 const EVENT_TYPES = [
   'Birthday',
@@ -33,9 +34,30 @@ interface PromptForm {
   orientation: 'portrait' | 'landscape';
 }
 
-function buildPrompt(form: PromptForm): string {
+function formatEventDate(dateStr: string): string {
+  if (!dateStr) return '';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }) + ' at ' + date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function buildPrompt(form: PromptForm, eventDetails?: EventDetailsForPrompt): string {
   const styleObj = STYLES.find((s) => s.label === form.style);
   const dims = form.orientation === 'portrait' ? '1080×1350' : '1200×630';
+
+  const hasDetails = eventDetails && (eventDetails.title || eventDetails.event_date || eventDetails.location_name);
 
   let prompt = `Create a ${form.style.toLowerCase()} digital invitation card design for a ${form.eventType.toLowerCase()}.
 
@@ -48,16 +70,69 @@ Design specifications:
     prompt += `\n- Special elements: ${form.extras.trim()}`;
   }
 
-  prompt += `
+  if (hasDetails) {
+    prompt += `\n\nINCLUDE the following text on the invitation design, laid out beautifully and legibly:`;
 
-IMPORTANT: Do NOT include any text, words, letters, or numbers on the design. Leave clean space where text can be overlaid later. The design should be purely decorative/illustrative.
+    if (eventDetails.title) {
+      prompt += `\n- Event title (prominent): "${eventDetails.title}"`;
+    }
+
+    if (eventDetails.description) {
+      prompt += `\n- Description: "${eventDetails.description}"`;
+    }
+
+    if (eventDetails.event_date) {
+      const formatted = formatEventDate(eventDetails.event_date);
+      prompt += `\n- Date & time: "${formatted}"`;
+    }
+
+    if (eventDetails.event_end_date) {
+      const formatted = formatEventDate(eventDetails.event_end_date);
+      prompt += `\n- Ends: "${formatted}"`;
+    }
+
+    if (eventDetails.location_name) {
+      prompt += `\n- Venue: "${eventDetails.location_name}"`;
+    }
+
+    if (eventDetails.location_address) {
+      prompt += `\n- Address: "${eventDetails.location_address}"`;
+    }
+
+    if (eventDetails.host_name) {
+      prompt += `\n- Hosted by: "${eventDetails.host_name}"`;
+    }
+
+    if (eventDetails.dress_code) {
+      prompt += `\n- Dress code: "${eventDetails.dress_code}"`;
+    }
+
+    if (eventDetails.rsvp_deadline) {
+      const formatted = formatEventDate(eventDetails.rsvp_deadline);
+      prompt += `\n- RSVP by: "${formatted}"`;
+    }
+
+    prompt += `
+
+Ensure all text is spelled exactly as provided above. Use elegant, readable typography with clear visual hierarchy — the title should be the most prominent, followed by date/time, then venue and address. Host name, dress code, and RSVP deadline should appear as smaller supporting details. The text should be integrated naturally into the design, not floating awkwardly.`;
+  } else {
+    prompt += `
+
+IMPORTANT: Do NOT include any text, words, letters, or numbers on the design. Leave clean space where text can be overlaid later. The design should be purely decorative/illustrative.`;
+  }
+
+  prompt += `
 
 The invitation should feel premium and visually striking, suitable for digital delivery. Use a polished composition with ${styleObj?.keywords || 'attention to detail'}. Output as a high-quality image.`;
 
   return prompt;
 }
 
-export default function AIPromptGenerator() {
+interface AIPromptGeneratorProps {
+  eventDetails?: EventDetailsForPrompt;
+}
+
+export default function AIPromptGenerator({ eventDetails }: AIPromptGeneratorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState<PromptForm>({
     eventType: EVENT_TYPES[0],
@@ -83,7 +158,7 @@ export default function AIPromptGenerator() {
   }, []);
 
   const handleGenerate = () => {
-    setGeneratedPrompt(buildPrompt(form));
+    setGeneratedPrompt(buildPrompt(form, eventDetails));
     setCopied(false);
   };
 
@@ -271,6 +346,29 @@ export default function AIPromptGenerator() {
           </button>
         </div>
       </div>
+
+      {/* Event details preview */}
+      {eventDetails && (eventDetails.title || eventDetails.event_date || eventDetails.location_name) ? (
+        <div className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4">
+          <p className="text-sm font-medium text-green-800">Your event details will be included in the prompt:</p>
+          <ul className="mt-2 space-y-1 text-sm text-green-700">
+            {eventDetails.title && <li>&bull; Title: {eventDetails.title}</li>}
+            {eventDetails.event_date && <li>&bull; Date: {formatEventDate(eventDetails.event_date)}</li>}
+            {eventDetails.event_end_date && <li>&bull; Ends: {formatEventDate(eventDetails.event_end_date)}</li>}
+            {eventDetails.location_name && <li>&bull; Venue: {eventDetails.location_name}</li>}
+            {eventDetails.location_address && <li>&bull; Address: {eventDetails.location_address}</li>}
+            {eventDetails.host_name && <li>&bull; Hosted by: {eventDetails.host_name}</li>}
+            {eventDetails.dress_code && <li>&bull; Dress code: {eventDetails.dress_code}</li>}
+            {eventDetails.rsvp_deadline && <li>&bull; RSVP by: {formatEventDate(eventDetails.rsvp_deadline)}</li>}
+          </ul>
+        </div>
+      ) : (
+        <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm text-amber-700">
+            No event details entered yet. Go back to add your title, date, and venue so the AI can include them on the invitation.
+          </p>
+        </div>
+      )}
 
       {/* Generate button */}
       <button

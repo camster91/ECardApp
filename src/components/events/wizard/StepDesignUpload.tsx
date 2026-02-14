@@ -4,16 +4,30 @@ import { useState, useCallback } from 'react';
 import type { WizardFormData } from './WizardContainer';
 import AIPromptGenerator from './AIPromptGenerator';
 
+export interface EventDetailsForPrompt {
+  title: string;
+  description: string;
+  event_date: string;
+  event_end_date: string;
+  location_name: string;
+  location_address: string;
+  host_name: string;
+  dress_code: string;
+  rsvp_deadline: string;
+}
+
 interface StepDesignUploadProps {
   designUrl: string;
   designType: string;
   onUpdate: (field: keyof WizardFormData, value: unknown) => void;
+  eventDetails?: EventDetailsForPrompt;
 }
 
 export default function StepDesignUpload({
   designUrl,
   designType,
   onUpdate,
+  eventDetails,
 }: StepDesignUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -134,7 +148,7 @@ export default function StepDesignUpload({
       </div>
 
       {/* AI Prompt Generator */}
-      <AIPromptGenerator />
+      <AIPromptGenerator eventDetails={eventDetails} />
 
       {/* Design type selector */}
       <div className="flex gap-3">
