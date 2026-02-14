@@ -77,7 +77,17 @@ export default function CommentsPage() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{comment.author_name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-gray-900">{comment.author_name}</p>
+                    {comment.is_private && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                        <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                        Private
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">{formatRelative(comment.created_at)}</p>
                 </div>
                 <Button

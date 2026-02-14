@@ -23,10 +23,12 @@ export async function GET(
       return NextResponse.json([], { status: 200 });
     }
 
+    // Only show public comments on the public page
     const { data: comments, error } = await adminSupabase
       .from("event_comments")
       .select("*")
       .eq("event_id", event.id)
+      .neq("is_private", true)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -74,6 +76,7 @@ export async function POST(
         event_id: event.id,
         author_name: parsed.data.author_name,
         message: parsed.data.message,
+        is_private: parsed.data.is_private ?? false,
       })
       .select()
       .single();

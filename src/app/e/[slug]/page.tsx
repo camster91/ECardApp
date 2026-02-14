@@ -5,6 +5,7 @@ import { EventDetails } from "@/components/public-event/EventDetails";
 import { RSVPForm } from "@/components/public-event/RSVPForm";
 import { LocationMap } from "@/components/public-event/LocationMap";
 import { CommentsSection } from "@/components/public-event/CommentsSection";
+import { SignupBoard } from "@/components/public-event/SignupBoard";
 import { ConfettiEffect } from "@/components/public-event/ConfettiEffect";
 import { isValidHexColor } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -106,6 +107,9 @@ export default async function PublicEventPage({ params }: Props) {
                 name={event.location_name || undefined}
               />
             )}
+
+            {/* Sign-up board */}
+            <SignupBoard eventSlug={slug} />
 
             {/* Comments / Message Board */}
             <CommentsSection eventSlug={slug} />

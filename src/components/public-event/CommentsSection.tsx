@@ -34,6 +34,7 @@ export function CommentsSection({ eventSlug }: CommentsSectionProps) {
   const [authorName, setAuthorName] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Auto-fill name if user is signed in
@@ -84,6 +85,7 @@ export function CommentsSection({ eventSlug }: CommentsSectionProps) {
         body: JSON.stringify({
           author_name: authorName.trim(),
           message: message.trim(),
+          is_private: isPrivate,
         }),
       });
 
@@ -149,6 +151,35 @@ export function CommentsSection({ eventSlug }: CommentsSectionProps) {
             />
           </div>
         </div>
+        {/* Private message toggle */}
+        <div className="flex items-center gap-2 pl-12">
+          <button
+            type="button"
+            onClick={() => setIsPrivate(!isPrivate)}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+              isPrivate ? 'bg-violet-600' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-200 ${
+                isPrivate ? 'translate-x-4' : 'translate-x-0'
+              }`}
+            />
+          </button>
+          <span className="text-xs text-gray-500">
+            {isPrivate ? (
+              <span className="flex items-center gap-1 text-violet-600 font-medium">
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                Private — only the host will see this
+              </span>
+            ) : (
+              'Send as private message to host'
+            )}
+          </span>
+        </div>
+
         {error && (
           <p className="text-sm text-red-600">{error}</p>
         )}

@@ -113,7 +113,32 @@ export interface EventComment {
   event_id: string;
   author_name: string;
   message: string;
+  is_private: boolean;
   created_at: string;
+}
+
+export interface SignupItem {
+  id: string;
+  event_id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  slots: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface SignupClaim {
+  id: string;
+  item_id: string;
+  event_id: string;
+  claimant_name: string;
+  claimant_email: string | null;
+  created_at: string;
+}
+
+export interface SignupItemWithClaims extends SignupItem {
+  claims: SignupClaim[];
 }
 
 export interface EventAnnouncement {

@@ -92,6 +92,7 @@ export const guestBulkSchema = z.array(
 export const commentSchema = z.object({
   author_name: z.string().min(1, "Name is required").max(100),
   message: z.string().min(1, "Message is required").max(1000),
+  is_private: z.boolean().optional().default(false),
 });
 
 export const announcementSchema = z.object({
