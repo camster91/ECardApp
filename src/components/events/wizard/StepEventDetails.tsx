@@ -14,11 +14,14 @@ interface EventDetailsFormValues {
   host_name: string;
   dress_code: string;
   rsvp_deadline: string;
+  max_attendees: string;
+  max_guests_per_rsvp: string;
 }
 
 interface StepEventDetailsProps {
   data: EventDetailsFormValues;
   registryLinks: RegistryLinkEntry[];
+  allowPlusOnes: boolean;
   onUpdate: (field: keyof WizardFormData, value: unknown) => void;
 }
 
@@ -34,7 +37,7 @@ const DRESS_CODE_OPTIONS = [
   'Festive / Theme',
 ];
 
-export default function StepEventDetails({ data, registryLinks, onUpdate }: StepEventDetailsProps) {
+export default function StepEventDetails({ data, registryLinks, allowPlusOnes, onUpdate }: StepEventDetailsProps) {
   const [regLabel, setRegLabel] = useState('');
   const [regUrl, setRegUrl] = useState('');
   const [regError, setRegError] = useState('');
@@ -81,6 +84,16 @@ export default function StepEventDetails({ data, registryLinks, onUpdate }: Step
         onUpdate(field, watchedValues[field]);
       }
     });
+
+    // Sync numeric fields (convert string to number/null for API)
+    if (watchedValues.max_attendees !== data.max_attendees) {
+      const val = watchedValues.max_attendees;
+      onUpdate('max_attendees', val ? parseInt(val, 10) || null : null);
+    }
+    if (watchedValues.max_guests_per_rsvp !== data.max_guests_per_rsvp) {
+      const val = watchedValues.max_guests_per_rsvp;
+      onUpdate('max_guests_per_rsvp', val ? parseInt(val, 10) || 10 : 10);
+    }
   }, [watchedValues, data, onUpdate]);
 
   return (
@@ -337,6 +350,92 @@ export default function StepEventDetails({ data, registryLinks, onUpdate }: Step
                 />
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Section: Guest Limits ─────────────────────────────── */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gradient-to-r from-violet-50/80 to-purple-50/40 px-5 py-3.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+            </svg>
+          </div>
+          <h3 className="text-sm font-semibold text-gray-900">Guest Limits</h3>
+        </div>
+        <div className="p-5 space-y-5">
+          <p className="text-xs text-gray-500">Control how many people can attend and whether guests can bring others.</p>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Max total attendees */}
+            <div>
+              <label htmlFor="max_attendees" className="block text-sm font-medium text-gray-700">
+                Max Total Attendees
+              </label>
+              <div className="relative mt-1.5">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                  </svg>
+                </div>
+                <input
+                  id="max_attendees"
+                  type="number"
+                  min="1"
+                  max="10000"
+                  {...register('max_attendees')}
+                  placeholder="No limit"
+                  className="w-full rounded-xl border border-gray-300 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 placeholder:text-gray-400"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">Leave empty for unlimited</p>
+            </div>
+
+            {/* Max guests per RSVP */}
+            <div>
+              <label htmlFor="max_guests_per_rsvp" className="block text-sm font-medium text-gray-700">
+                Max Guests per RSVP
+              </label>
+              <div className="relative mt-1.5">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                  </svg>
+                </div>
+                <input
+                  id="max_guests_per_rsvp"
+                  type="number"
+                  min="1"
+                  max="50"
+                  {...register('max_guests_per_rsvp')}
+                  placeholder="10"
+                  className="w-full rounded-xl border border-gray-300 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 placeholder:text-gray-400"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">How many people each respondent can bring</p>
+            </div>
+          </div>
+
+          {/* Allow +1s toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Allow +1s (Additional Guests)</p>
+              <p className="mt-0.5 text-xs text-gray-500">Let guests bring additional people when they RSVP</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onUpdate('allow_plus_ones', !allowPlusOnes)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                allowPlusOnes ? 'bg-violet-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                  allowPlusOnes ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
         </div>
       </div>

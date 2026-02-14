@@ -47,6 +47,9 @@ export interface Event {
   status: EventStatus;
   tier: EventTier;
   max_responses: number;
+  max_attendees: number | null;
+  allow_plus_ones: boolean;
+  max_guests_per_rsvp: number;
   payment_id: string | null;
   created_at: string;
   updated_at: string;

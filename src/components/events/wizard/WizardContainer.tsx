@@ -48,6 +48,9 @@ export interface WizardFormData {
   dress_code: string;
   rsvp_deadline: string;
   registry_links: RegistryLinkEntry[];
+  max_attendees: number | null;
+  allow_plus_ones: boolean;
+  max_guests_per_rsvp: number;
   design_url: string;
   design_type: string;
   customization: EventCustomization;
@@ -103,6 +106,9 @@ function getInitialState(initialData?: Partial<WizardFormData>): WizardFormData 
     dress_code: '',
     rsvp_deadline: '',
     registry_links: [],
+    max_attendees: null,
+    allow_plus_ones: true,
+    max_guests_per_rsvp: 10,
     design_url: '',
     design_type: 'upload',
     customization: {
@@ -208,6 +214,9 @@ export default function WizardContainer({
         dress_code: formData.dress_code || undefined,
         rsvp_deadline: formData.rsvp_deadline || undefined,
         registry_links: formData.registry_links.length > 0 ? formData.registry_links : undefined,
+        max_attendees: formData.max_attendees,
+        allow_plus_ones: formData.allow_plus_ones,
+        max_guests_per_rsvp: formData.max_guests_per_rsvp,
         design_url: formData.design_url || undefined,
         design_type: formData.design_type || 'upload',
         customization: formData.customization,
@@ -297,8 +306,11 @@ export default function WizardContainer({
               host_name: formData.host_name,
               dress_code: formData.dress_code,
               rsvp_deadline: formData.rsvp_deadline,
+              max_attendees: formData.max_attendees?.toString() ?? '',
+              max_guests_per_rsvp: formData.max_guests_per_rsvp?.toString() ?? '10',
             }}
             registryLinks={formData.registry_links}
+            allowPlusOnes={formData.allow_plus_ones}
             onUpdate={updateField}
           />
         );

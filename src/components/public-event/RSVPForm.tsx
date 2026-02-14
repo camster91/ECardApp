@@ -12,9 +12,12 @@ interface RSVPFormProps {
   eventSlug: string;
   fields: RSVPField[];
   primaryColor: string;
+  allowPlusOnes?: boolean;
+  maxGuestsPerRsvp?: number;
+  spotsRemaining?: number | null;
 }
 
-export function RSVPForm({ eventSlug, fields, primaryColor }: RSVPFormProps) {
+export function RSVPForm({ eventSlug, fields, primaryColor, allowPlusOnes = true, maxGuestsPerRsvp = 10, spotsRemaining = null }: RSVPFormProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -98,7 +101,21 @@ export function RSVPForm({ eventSlug, fields, primaryColor }: RSVPFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-semibold">RSVP</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">RSVP</h2>
+        {spotsRemaining !== null && (
+          <span className={cn(
+            "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+            spotsRemaining > 10
+              ? "bg-green-100 text-green-700"
+              : spotsRemaining > 0
+                ? "bg-amber-100 text-amber-700"
+                : "bg-red-100 text-red-700"
+          )}>
+            {spotsRemaining > 0 ? `${spotsRemaining} spots left` : "Event full"}
+          </span>
+        )}
+      </div>
 
       {/* Always show name field */}
       <Input
@@ -162,20 +179,43 @@ export function RSVPForm({ eventSlug, fields, primaryColor }: RSVPFormProps) {
                 autoComplete="email"
               />
             );
-          case "number":
+          case "number": {
+            // For headcount field, enforce guest limits
+            const isHeadcount = field.field_name === "headcount";
+            const effectiveMax = isHeadcount
+              ? allowPlusOnes
+                ? Math.min(
+                    maxGuestsPerRsvp,
+                    spotsRemaining !== null ? Math.max(1, spotsRemaining) : maxGuestsPerRsvp
+                  )
+                : 1
+              : 50;
+
+            // If +1s disabled and this is headcount, hide the field
+            if (isHeadcount && !allowPlusOnes) {
+              return null;
+            }
+
             return (
-              <Input
-                key={field.id}
-                label={`${field.field_label}${field.is_required ? " *" : ""}`}
-                type="number"
-                min="1"
-                max="50"
-                placeholder={field.placeholder || "1"}
-                value={formData[field.field_name] || ""}
-                onChange={(e) => updateField(field.field_name, e.target.value)}
-                required={field.is_required}
-              />
+              <div key={field.id}>
+                <Input
+                  label={`${field.field_label}${field.is_required ? " *" : ""}`}
+                  type="number"
+                  min="1"
+                  max={String(effectiveMax)}
+                  placeholder={field.placeholder || "1"}
+                  value={formData[field.field_name] || ""}
+                  onChange={(e) => updateField(field.field_name, e.target.value)}
+                  required={field.is_required}
+                />
+                {isHeadcount && spotsRemaining !== null && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    {spotsRemaining} spot{spotsRemaining !== 1 ? "s" : ""} remaining
+                  </p>
+                )}
+              </div>
             );
+          }
           case "select":
             return (
               <Select

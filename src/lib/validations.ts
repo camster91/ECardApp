@@ -34,6 +34,9 @@ export const eventCreateSchema = z.object({
     label: z.string().min(1).max(100),
     url: z.string().url().max(500),
   })).max(10).optional(),
+  max_attendees: z.number().int().min(1).max(10000).nullable().optional(),
+  allow_plus_ones: z.boolean().optional(),
+  max_guests_per_rsvp: z.number().int().min(1).max(50).optional(),
   design_url: z.string().optional(),
   design_type: z.enum(["image", "pdf", "upload"]).default("upload"),
   customization: z

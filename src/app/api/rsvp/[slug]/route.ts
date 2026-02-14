@@ -14,7 +14,7 @@ export async function POST(
     // Find the published event by slug
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("id, status, tier, max_responses")
+      .select("*")
       .eq("slug", slug)
       .eq("status", "published")
       .single();
@@ -50,8 +50,50 @@ export async function POST(
       );
     }
 
-    const { respondent_name, respondent_email, status, headcount, response_data } =
+    let { respondent_name, respondent_email, status, headcount, response_data } =
       parsed.data;
+
+    // Enforce +1 restrictions (default: allow)
+    const allowPlusOnes = event.allow_plus_ones !== undefined ? event.allow_plus_ones : true;
+    if (!allowPlusOnes) {
+      headcount = 1;
+    }
+
+    // Enforce per-RSVP guest limit (default: 10)
+    const maxPerRsvp = event.max_guests_per_rsvp || 10;
+    if (headcount > maxPerRsvp) {
+      return NextResponse.json(
+        { error: `Maximum ${maxPerRsvp} guest${maxPerRsvp !== 1 ? "s" : ""} per RSVP.` },
+        { status: 400 }
+      );
+    }
+
+    // Enforce total attendee limit (default: no limit)
+    const maxAttendees = event.max_attendees || null;
+    if (maxAttendees && status === "attending") {
+      const { data: attendingResponses } = await supabase
+        .from("rsvp_responses")
+        .select("headcount")
+        .eq("event_id", event.id)
+        .eq("status", "attending");
+
+      const currentTotal = (attendingResponses || []).reduce(
+        (sum, r) => sum + (r.headcount || 1),
+        0
+      );
+
+      if (currentTotal + headcount > maxAttendees) {
+        const spotsLeft = Math.max(0, maxAttendees - currentTotal);
+        return NextResponse.json(
+          {
+            error: spotsLeft > 0
+              ? `Only ${spotsLeft} spot${spotsLeft !== 1 ? "s" : ""} remaining. Please reduce your guest count.`
+              : "This event has reached its maximum number of attendees.",
+          },
+          { status: 403 }
+        );
+      }
+    }
 
     // Insert RSVP response
     const { data: response, error: insertError } = await supabase

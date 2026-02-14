@@ -55,6 +55,23 @@ export default async function PublicEventPage({ params }: Props) {
     .eq("event_id", event.id)
     .order("sort_order", { ascending: true });
 
+  // Calculate spots remaining for guest limits
+  let spotsRemaining: number | null = null;
+  const maxAttendees = event.max_attendees || null;
+  if (maxAttendees) {
+    const { data: attendingResponses } = await supabase
+      .from("rsvp_responses")
+      .select("headcount")
+      .eq("event_id", event.id)
+      .eq("status", "attending");
+
+    const currentTotal = (attendingResponses || []).reduce(
+      (sum: number, r: { headcount: number }) => sum + (r.headcount || 1),
+      0
+    );
+    spotsRemaining = Math.max(0, maxAttendees - currentTotal);
+  }
+
   const safeBgColor = isValidHexColor(event.customization?.backgroundColor ?? "")
     ? event.customization.backgroundColor
     : "#ffffff";
@@ -101,6 +118,9 @@ export default async function PublicEventPage({ params }: Props) {
                 eventSlug={slug}
                 fields={rsvpFields || []}
                 primaryColor={safePrimaryColor}
+                allowPlusOnes={event.allow_plus_ones !== undefined ? event.allow_plus_ones : true}
+                maxGuestsPerRsvp={event.max_guests_per_rsvp || 10}
+                spotsRemaining={spotsRemaining}
               />
             </div>
           </div>
