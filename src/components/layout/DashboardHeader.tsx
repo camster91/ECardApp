@@ -3,13 +3,9 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getInitials } from "@/lib/utils";
-import { Menu } from "lucide-react";
+import Link from "next/link";
 
-interface DashboardHeaderProps {
-  onMenuToggle?: () => void;
-}
-
-export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
+export function DashboardHeader() {
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,18 +16,19 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
   }, []);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 sm:px-6">
-      <button
-        onClick={onMenuToggle}
-        className="rounded-lg p-2 hover:bg-neutral-100 md:hidden"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
+    <header className="flex h-14 items-center justify-between border-b border-border bg-white px-4 sm:h-16 sm:px-6">
+      {/* Mobile logo */}
+      <Link href="/dashboard" className="flex items-center gap-2 md:hidden">
+        <span className="text-lg font-bold">
+          <span className="text-foreground">ECard</span>
+          <span className="text-brand-600">App</span>
+        </span>
+      </Link>
       <div className="hidden md:block" />
       <div className="flex items-center gap-3">
         {email && (
           <>
-            <span className="text-sm text-muted-foreground">{email}</span>
+            <span className="hidden text-sm text-muted-foreground sm:block">{email}</span>
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
               {getInitials(email.split("@")[0])}
             </div>

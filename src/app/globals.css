@@ -74,3 +74,20 @@ body {
 .gradient-top-bar {
   background: linear-gradient(to right, #7c3aed, #ec4899, #3b82f6);
 }
+
+/* PWA safe area for notched phones */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Smoother touch interactions */
+@media (hover: none) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Prevent overscroll bounce on iOS */
+html {
+  overscroll-behavior: none;
+}
