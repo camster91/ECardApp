@@ -37,17 +37,12 @@ export const metadata: Metadata = {
     "free digital invitations",
   ],
   manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "ECardApp",
-  },
+  // Removed PWA-specific viewport settings
   formatDetection: {
     telephone: false,
   },
-  other: {
-    "mobile-web-app-capable": "yes",
-  },
+  // Explicitly set viewport to prevent restrictive PWA defaults
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
@@ -59,7 +54,6 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="theme-color" content="#7c3aed" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
       </head>
       <body
