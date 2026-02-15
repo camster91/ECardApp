@@ -43,24 +43,36 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes - redirect to login if not authenticated
-  const protectedPaths = ["/dashboard", "/events"];
-  const isProtectedRoute = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
+  const { pathname } = request.nextUrl;
 
-  if (isProtectedRoute && !user) {
+  // Public routes that don't require authentication
+  const publicPaths = [
+    "/",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/callback",
+    "/how-it-works",
+    "/pricing",
+    "/use-cases",
+  ];
+
+  const isPublicRoute =
+    publicPaths.some((path) => pathname === path || pathname.startsWith(path + "/")) ||
+    pathname.startsWith("/e/") ||                             // Public event pages
+    /^\/events\/[^\/]+\/(guest|public)$/.test(pathname);      // Guest/public event access
+
+  // Protected routes - redirect to login if not authenticated
+  if (!isPublicRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
+    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 
   // Redirect authenticated users away from auth pages
   const authPaths = ["/login", "/signup", "/forgot-password"];
-  const isAuthRoute = authPaths.some(
-    (path) => request.nextUrl.pathname === path
-  );
+  const isAuthRoute = authPaths.some((path) => pathname === path);
 
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone();
