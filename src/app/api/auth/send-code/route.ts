@@ -3,13 +3,17 @@ import { createClient } from '@/lib/supabase/server';
 import { Resend } from 'resend';
 import twilio from 'twilio';
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY!);
+}
 
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_API_KEY_SECRET,
-  { accountSid: process.env.TWILIO_ACCOUNT_SID }
-);
+function getTwilioClient() {
+  return twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_API_KEY_SECRET,
+    { accountSid: process.env.TWILIO_ACCOUNT_SID }
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Send code via appropriate channel
     if (method === 'email' && email) {
-      const { error: emailError } = await resend.emails.send({
+      const { error: emailError } = await getResend().emails.send({
         from: 'ECardApp <noreply@ashbi.ca>',
         to: email,
         subject: role === 'admin' ? 'Your Admin Login Code' : 'Your Guest Access Code',
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest) {
       }
     } else if (method === 'phone' && phone) {
       try {
-        await twilioClient.messages.create({
+        await getTwilioClient().messages.create({
           body: `Your ECardApp ${role} access code: ${code}. This code expires in 15 minutes.`,
           from: process.env.TWILIO_MESSAGING_SERVICE_SID!,
           to: phone
