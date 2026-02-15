@@ -115,48 +115,106 @@ export async function POST(request: NextRequest) {
 
 function generateEmailTemplate(code: string, role: 'admin' | 'guest', eventId?: string): string {
   const isAdmin = role === 'admin';
-  
-  return `
-    <!DOCTYPE html>
-    <html>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-          <h1 style="color: white; margin: 0;">ECardApp</h1>
-        </div>
-        
-        <div style="padding: 30px; background: #f9fafb;">
-          <h2 style="color: #374151; margin-top: 0;">
-            ${isAdmin ? 'Your Admin Login Code' : 'Your Guest Access Code'}
-          </h2>
-          
-          <div style="background: white; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid #e5e7eb;">
-            <div style="font-size: 32px; font-weight: bold; letter-spacing: 10px; color: #374151; margin: 20px 0;">
-              ${code}
-            </div>
-            <p style="color: #6b7280; margin: 0;">
-              This code expires in 15 minutes
-            </p>
-          </div>
-          
-          <p style="color: #6b7280;">
-            ${isAdmin 
-              ? 'Enter this code on the login page to access your admin dashboard.' 
-              : 'Enter this code on the event page to access guest features.'}
-          </p>
-          
-          ${eventId ? `
-            <p style="color: #6b7280;">
-              Event ID: ${eventId}
-            </p>
-          ` : ''}
-          
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-          
-          <p style="color: #9ca3af; font-size: 14px;">
-            If you didn't request this code, please ignore this email.
-          </p>
-        </div>
-      </body>
-    </html>
-  `;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ecard.ashbi.ca';
+  const loginUrl = isAdmin ? `${siteUrl}/login` : eventId ? `${siteUrl}/events/${eventId}/guest` : `${siteUrl}/login`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Top accent bar -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+          <tr><td style="height:4px;background:linear-gradient(to right,#7c3aed,#ec4899,#3b82f6);border-radius:16px 16px 0 0;"></td></tr>
+        </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:0 0 16px 16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#7c3aed 0%,#6366f1 50%,#3b82f6 100%);padding:40px 32px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:32px;">${isAdmin ? '&#128272;' : '&#127881;'}</p>
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">
+                ${isAdmin ? 'Admin Login Code' : 'Guest Access Code'}
+              </h1>
+              <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.8);">
+                <span style="font-weight:600;">ECard</span><span style="color:#c4b5fd;">App</span>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 24px 16px;">
+              <p style="margin:0;font-size:15px;color:#6b7280;line-height:1.6;">
+                ${isAdmin
+                  ? 'Enter the code below on the login page to access your admin dashboard.'
+                  : 'Enter the code below to access your event as a guest.'}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Code Block -->
+          <tr>
+            <td style="padding:0 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f5ff;border-radius:16px;border:2px dashed #c4b5fd;overflow:hidden;">
+                <tr>
+                  <td style="padding:28px 20px;text-align:center;">
+                    <p style="margin:0 0 8px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">Your verification code</p>
+                    <p style="margin:0;font-size:40px;font-weight:800;letter-spacing:12px;color:#7c3aed;font-family:'Courier New',Courier,monospace;">
+                      ${code}
+                    </p>
+                    <p style="margin:12px 0 0;font-size:13px;color:#9ca3af;">
+                      &#9200; Expires in 15 minutes
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding:24px 24px 12px;" align="center">
+              <a href="${loginUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#ffffff;text-decoration:none;padding:14px 40px;border-radius:12px;font-size:16px;font-weight:600;box-shadow:0 4px 14px rgba(99,102,241,0.35);">
+                ${isAdmin ? 'Go to Login' : 'Access Event'}
+              </a>
+            </td>
+          </tr>
+
+          <!-- Security Notice -->
+          <tr>
+            <td style="padding:12px 24px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fefce8;border-radius:10px;overflow:hidden;">
+                <tr>
+                  <td style="padding:14px 16px;">
+                    <p style="margin:0;font-size:13px;color:#854d0e;line-height:1.5;">
+                      &#128274; <strong>Security tip:</strong> Never share this code with anyone. ECardApp will never ask for your code via phone or chat.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 24px;border-top:1px solid #f3f4f6;text-align:center;background:#fafafa;">
+              <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;">
+                If you didn't request this code, you can safely ignore this email.
+              </p>
+              <p style="margin:8px 0 0;font-size:13px;font-weight:600;">
+                <span style="color:#374151;">ECard</span><span style="color:#7c3aed;">App</span>
+              </p>
+              <p style="margin:4px 0 0;font-size:11px;color:#d1d5db;">
+                Beautiful Digital Invitations &amp; RSVP Management
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }

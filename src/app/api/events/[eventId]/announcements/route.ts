@@ -117,7 +117,7 @@ export async function POST(
     }
 
     const resend = getResendClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ecard.ashbi.ca";
     const smsEnabled = isTwilioConfigured();
 
     const BATCH_SIZE = 10;
@@ -147,7 +147,7 @@ export async function POST(
 
             try {
               await resend.emails.send({
-                from: "ECardApp <onboarding@resend.dev>",
+                from: "ECardApp <noreply@ashbi.ca>",
                 to: guest.email,
                 subject,
                 html,

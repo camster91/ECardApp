@@ -21,7 +21,7 @@ export function ExportTools({
 }: ExportToolsProps) {
   const [copied, setCopied] = useState(false);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ecard.ashbi.ca';
   const rsvpUrl = `${siteUrl}/e/${eventSlug}`;
 
   function handleDownloadDesign() {

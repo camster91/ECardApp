@@ -35,7 +35,7 @@ export async function createCheckoutSession({
     throw new Error(`Missing Stripe price ID for tier: ${tier}`);
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ecard.ashbi.ca";
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",

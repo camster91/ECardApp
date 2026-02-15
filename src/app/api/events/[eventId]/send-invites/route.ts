@@ -72,7 +72,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     }
 
     const resend = getResendClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ecard.ashbi.ca";
     // SMS requires standard or premium tier
     const smsEnabled = isTwilioConfigured() && event.tier !== "free";
 
@@ -120,7 +120,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
             try {
               await resend.emails.send({
-                from: "ECardApp <onboarding@resend.dev>",
+                from: "ECardApp <noreply@ashbi.ca>",
                 to: guest.email,
                 subject,
                 html,
