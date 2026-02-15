@@ -418,13 +418,7 @@ export function EnhancedLoginForm({
       {!isGuestMode && (
         <div className="pt-4 border-t border-gray-200">
           <p className="text-center text-sm text-muted-foreground">
-            Need guest access?{" "}
-            <a 
-              href={eventId ? `/events/${eventId}/guest` : '/guest'} 
-              className="text-brand-600 hover:text-brand-700 font-medium"
-            >
-              Go to guest login
-            </a>
+            Are you an event guest? Check your invitation link to access your event.
           </p>
         </div>
       )}

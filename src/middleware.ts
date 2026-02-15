@@ -13,18 +13,17 @@ export async function middleware(request: NextRequest) {
     '/forgot-password',
     '/callback',
     '/api/auth',
-    '/events/[eventId]/guest',
-    '/events/[eventId]/public'
+    '/api/migrate',
+    '/e/',            // Public event pages (/e/slug)
+    '/how-it-works',
+    '/pricing',
+    '/use-cases',
   ];
   
   // Check if current route is public
   const isPublicRoute = publicRoutes.some(route => {
-    if (route.includes('[eventId]')) {
-      const pattern = /^\/events\/[^\/]+\/(guest|public)$/;
-      return pattern.test(pathname);
-    }
-    return pathname.startsWith(route);
-  });
+    return pathname === route || pathname.startsWith(route);
+  }) || /^\/events\/[^\/]+\/(guest|public)$/.test(pathname);
 
   if (isPublicRoute) {
     return NextResponse.next();
@@ -42,15 +41,25 @@ export async function middleware(request: NextRequest) {
   }
 
   // Verify session
-  const { data: session, error } = await supabase
-    .from('user_sessions')
-    .select('*')
-    .eq('session_token', sessionToken)
-    .gt('expires_at', new Date().toISOString())
-    .single();
+  let session = null;
+  try {
+    const { data, error } = await supabase
+      .from('user_sessions')
+      .select('*')
+      .eq('session_token', sessionToken)
+      .gt('expires_at', new Date().toISOString())
+      .single();
 
-  if (error || !session) {
-    // Invalid or expired session
+    if (error || !data) {
+      // Invalid or expired session
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('ecardapp_session');
+      response.cookies.delete('ecardapp_user');
+      return response;
+    }
+    session = data;
+  } catch {
+    // Table might not exist yet — redirect to login
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('ecardapp_session');
     response.cookies.delete('ecardapp_user');
@@ -97,9 +106,9 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
+     * - favicon.ico, icons, manifest
+     * - public assets (images, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|icons|manifest\\.json|opengraph-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };
