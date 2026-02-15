@@ -41,3 +41,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+RUN_SQL_NOW.html
+create-tables-minimal.sql
+create-tables-remote.sh
+create-tables-via-insert.js
+direct-db-connection.js
+execute-sql-direct.js
+final-sql-execution.js
+run-migration.js
+sql-migration-instructions.html
+test-and-setup.js
+test-auth.js
+test-basic.js

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
@@ -37,12 +37,14 @@ export const metadata: Metadata = {
     "free digital invitations",
   ],
   manifest: "/manifest.json",
-  // Removed PWA-specific viewport settings
   formatDetection: {
     telephone: false,
   },
-  // Explicitly set viewport to prevent restrictive PWA defaults
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

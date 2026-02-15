@@ -4,9 +4,21 @@ import { createClient } from '@/lib/supabase/server';
 // This is a one-time migration endpoint
 // DELETE THIS FILE AFTER RUNNING
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+function getErrorCode(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'code' in error) {
+    return (error as { code: string }).code;
+  }
+  return undefined;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Simple security check - you could add a secret token here
+    // Simple security check
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.MIGRATION_SECRET || 'migrate-now'}`) {
       return NextResponse.json(
@@ -19,8 +31,6 @@ export async function POST(request: NextRequest) {
     
     console.log('Starting database migration...');
     
-    // Create auth_codes table
-    console.log('Creating auth_codes table...');
     const createAuthCodes = `
       CREATE TABLE IF NOT EXISTS auth_codes (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -31,7 +41,6 @@ export async function POST(request: NextRequest) {
         event_id UUID,
         expires_at TIMESTAMPTZ NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW(),
-        
         CONSTRAINT email_or_phone CHECK (
           (email IS NOT NULL AND phone IS NULL) OR 
           (email IS NULL AND phone IS NOT NULL)
@@ -39,8 +48,6 @@ export async function POST(request: NextRequest) {
       );
     `;
     
-    // Create admin_users table
-    console.log('Creating admin_users table...');
     const createAdminUsers = `
       CREATE TABLE IF NOT EXISTS admin_users (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -52,8 +59,6 @@ export async function POST(request: NextRequest) {
       );
     `;
     
-    // Create user_sessions table
-    console.log('Creating user_sessions table...');
     const createUserSessions = `
       CREATE TABLE IF NOT EXISTS user_sessions (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -65,12 +70,6 @@ export async function POST(request: NextRequest) {
       );
     `;
     
-    // We can't execute raw SQL directly, but we can try to insert data
-    // which might auto-create tables in some cases
-    
-    // Instead, let's try to use the Supabase REST API to execute SQL
-    // We'll make HTTP requests to the Supabase REST API
-    
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
@@ -81,7 +80,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Try to execute SQL via REST API
     const sqlStatements = [
       createAuthCodes,
       createAdminUsers,
@@ -100,7 +98,6 @@ export async function POST(request: NextRequest) {
     
     for (const sql of sqlStatements) {
       try {
-        // Try to execute via pg_net extension if available
         const response = await fetch(`${supabaseUrl}/rest/v1/rpc/pg_net_exec`, {
           method: 'POST',
           headers: {
@@ -118,16 +115,15 @@ export async function POST(request: NextRequest) {
           success: response.ok
         });
         
-      } catch (error) {
+      } catch (error: unknown) {
         results.push({
           sql: sql.substring(0, 50) + '...',
-          error: error.message,
+          error: getErrorMessage(error),
           success: false
         });
       }
     }
     
-    // Check if tables were created by trying to insert test data
     const testResults = [];
     
     // Test auth_codes
@@ -147,21 +143,20 @@ export async function POST(request: NextRequest) {
         error: error?.message
       });
       
-      // Clean up test data
       if (!error) {
         await supabase.from('auth_codes').delete().eq('email', 'test@example.com');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       testResults.push({
         table: 'auth_codes',
         exists: false,
-        error: error.message
+        error: getErrorMessage(error)
       });
     }
     
     // Test admin_users
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('admin_users')
         .select('count')
         .limit(1);
@@ -171,11 +166,11 @@ export async function POST(request: NextRequest) {
         exists: !error || error.code !== '42P01',
         error: error?.message
       });
-    } catch (error) {
+    } catch (error: unknown) {
       testResults.push({
         table: 'admin_users',
         exists: false,
-        error: error.message
+        error: getErrorMessage(error)
       });
     }
     
@@ -187,16 +182,15 @@ export async function POST(request: NextRequest) {
       note: 'If tables were not created, run SQL manually in Supabase SQL Editor'
     });
     
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Migration error:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }
 }
 
-// Also provide a GET endpoint to check status
 export async function GET() {
   const supabase = await createClient();
   
@@ -215,11 +209,11 @@ export async function GET() {
         exists: !error || error.code !== '42P01',
         error: error?.message
       });
-    } catch (error) {
+    } catch (error: unknown) {
       results.push({
         table,
         exists: false,
-        error: error.message
+        error: getErrorMessage(error)
       });
     }
   }
