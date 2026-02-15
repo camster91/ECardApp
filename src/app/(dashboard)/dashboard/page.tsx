@@ -1,117 +1,176 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { EmptyState } from "@/components/dashboard/EmptyState";
-import { EventCard } from "@/components/dashboard/EventCard";
-import { StatsCard } from "@/components/dashboard/StatsCard";
-import { CalendarPlus, Calendar, Users, BarChart3, Sparkles } from "lucide-react";
-import Link from "next/link";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
+import { getCurrentUser, requireAdmin } from '@/lib/auth/session';
+import { getEventsByUser } from '@/lib/events';
+import Link from 'next/link';
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const { data: events } = await supabase
-    .from("events")
-    .select("*, rsvp_responses(count)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  // Extract response counts from the joined query
-  const responseCounts: Record<string, number> = {};
-  for (const event of events ?? []) {
-    const countArr = (event as Record<string, unknown>).rsvp_responses as { count: number }[] | undefined;
-    responseCounts[event.id] = countArr?.[0]?.count ?? 0;
-  }
-
-  const totalEvents = events?.length ?? 0;
-  const publishedEvents =
-    events?.filter((e) => e.status === "published").length ?? 0;
-  const totalResponses = Object.values(responseCounts).reduce(
-    (sum, c) => sum + c,
-    0
-  );
-
-  const greeting = getGreeting();
-  const userName = user.email?.split("@")[0] || "there";
+  await requireAdmin();
+  const user = await getCurrentUser();
+  const events = user ? await getEventsByUser(user.id) : [];
 
   return (
-    <div>
-      {/* Welcome header */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-            {greeting}, {userName}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {totalEvents === 0
-              ? "Ready to create your first event?"
-              : `You have ${totalEvents} event${totalEvents !== 1 ? "s" : ""} and ${totalResponses} response${totalResponses !== 1 ? "s" : ""}`}
-          </p>
-        </div>
-        <Link
-          href="/events/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-brand-500/25 transition-all hover:shadow-lg hover:shadow-brand-500/30 active:scale-[0.98] sm:py-2.5"
-        >
-          <Sparkles className="h-4 w-4" />
-          Create Event
-        </Link>
-      </div>
-
-      {totalEvents > 0 && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <StatsCard
-            title="Total Events"
-            value={totalEvents}
-            icon={<Calendar className="h-5 w-5" />}
-            color="purple"
-          />
-          <StatsCard
-            title="Published"
-            value={publishedEvents}
-            icon={<BarChart3 className="h-5 w-5" />}
-            color="green"
-          />
-          <StatsCard
-            title="Total Responses"
-            value={totalResponses}
-            icon={<Users className="h-5 w-5" />}
-            color="blue"
-          />
-        </div>
-      )}
-
-      {totalEvents === 0 ? (
-        <EmptyState />
-      ) : (
-        <div>
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Your Events</h2>
-          <div className="space-y-4">
-            {events?.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                responseCount={responseCounts[event.id] ?? 0}
-              />
-            ))}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="mt-2 text-gray-600">
+                Welcome back, {user?.name || user?.email || 'Admin'}!
+              </p>
+            </div>
+            <Link
+              href="/events/new"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Create Event
+            </Link>
           </div>
         </div>
-      )}
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Total Events</dt>
+                    <dd className="text-lg font-medium text-gray-900">{events.length}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Total Guests</dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {events.reduce((total, event) => total + (event.guest_count || 0), 0)}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">RSVPs Received</dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {events.reduce((total, event) => total + (event.rsvp_count || 0), 0)}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Events List */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Your Events</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              Manage your events and guest lists
+            </p>
+          </div>
+          
+          {events.length === 0 ? (
+            <div className="text-center py-12">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No events</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Get started by creating your first event.
+              </p>
+              <div className="mt-6">
+                <Link
+                  href="/events/new"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  New Event
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {events.map((event) => (
+                <li key={event.id}>
+                  <Link href={`/events/${event.id}`} className="block hover:bg-gray-50">
+                    <div className="px-4 py-4 sm:px-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-blue-600 truncate">
+                            {event.title}
+                          </p>
+                          <div className="mt-2 flex">
+                            <div className="flex items-center text-sm text-gray-500">
+                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span>
+                                {event.event_date ? new Date(event.event_date).toLocaleDateString() : 'No date set'}
+                              </span>
+                            </div>
+                            <div className="ml-6 flex items-center text-sm text-gray-500">
+                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <span>{event.location_name || 'No location'}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="ml-4 flex-shrink-0">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            event.status === 'published' 
+                              ? 'bg-green-100 text-green-800'
+                              : event.status === 'draft'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {event.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
-}
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
 }
