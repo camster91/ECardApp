@@ -59,7 +59,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="theme-color" content="#7c3aed" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
       </head>
       <body
